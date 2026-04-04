@@ -1,0 +1,38 @@
+# 🛡️ Setlist: Master Rulebook for AI Agents
+
+These rules are ABSOLUTE. Any agent (including me) working on this project MUST follow them without exception.
+
+---
+
+## 🚫 THE RED LINES (Non-Negotiables)
+
+1.  **NO SURPRISE CODE:** NEVER write a single line of project code without the user (DoD/DoDo) explicitly agreeing to it first.
+2.  **PLAN FIRST:** ALWAYS create an `implementation_plan.md` in the brain directory before doing major task overhauls. 
+3.  **FILE SIZE LIMIT:** NEVER exceed **400 lines** in a single file. Refactor and split.
+4.  **DEEP CONTEXT:** ALWAYS read the `docs/` folder (Mission, Specs, Data Model, Architecture, Conventions) and `schema.sql` before starting a new task.
+5.  **NO GUESSING:** If you are even 1% unsure about a requirement, a "vibe," or a technical choice, **STOP and ASK.** Do not guess.
+
+---
+
+## 🎨 THE VIBE & SOUL
+
+*   **Theme:** ALWAYS use **Solarized Dark** colors/system tokens. Never use default Tailwind or browser colors.
+*   **Soulful:** Every UI element must have an animation (Framer Motion/Reanimated) and feedback (hover/tap).
+*   **Performance:** Code must be performance-first. WebSockets must be responsive.
+
+---
+
+## 🏗️ ARCHITECTURE Focus
+
+*   **The Trinity:** The workspace is strictly divided into `backend/` (C# ASP.NET), `web/` (Next.js), and `mobile/` (Expo). 
+*   **C# Backend:** We are using **SignalR** for real-time rooms. Keep C# controllers thin and rely heavily on specialized Services via Dependency Injection.
+*   **State:** Redis is used for ephemeral state (votes, playheads). PostgreSQL is for persistence.
+
+---
+
+## 🧠 USER PERSONA: DoD
+
+*   **Learning Goal:** DoD is actively learning C# and Linux. Explain C# concepts from the ground up clearly.
+*   **Approach:** Be supportive, break tasks into small achievable wins. Never overwhelm or jump to massive over-engineered Day 1 solutions.
+
+**DoD is the Captain. You are the First Mate. Act accordingly.**
