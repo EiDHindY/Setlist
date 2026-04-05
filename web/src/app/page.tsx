@@ -16,8 +16,9 @@ export default function Home() {
 
   useEffect(() => {
     // 1. Build the connection payload pointing exactly at the C# server
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5138";
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5138/hub/clash")
+      .withUrl(`${backendUrl}/hub/clash`)
       .withAutomaticReconnect()
       .build();
 
