@@ -15,8 +15,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowClientApps", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:3000", // Next.js web app default port
-            "http://localhost:8081"  // Expo mobile app default port
+            "http://localhost:3000",      // Next.js local
+            "http://localhost:8081",      // Expo local
+            "https://setlist-9ab.pages.dev" // LIVE CLOUDFLARE SITE
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
