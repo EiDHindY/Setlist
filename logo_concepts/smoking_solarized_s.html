@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setlist - Smoking Elegant Premium</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Montserrat:wght@200;300;400&display=swap');
+  
+  :root {
+    --sol-base03: #002b36;
+    --sol-base02: #073642;
+    --sol-base01: #586e75;
+    --sol-base0:  #839496;
+    --sol-base1:  #93a1a1;
+    --sol-base3:  #fdf6e3;
+    --sol-cyan:   #2aa198;
+    --sol-blue:   #268bd2;
+    --sol-magenta:#d33682;
+  }
+
+  body {
+    margin: 0;
+    height: 100vh;
+    background-color: var(--sol-base03);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* The smoking atmosphere */
+  .atmosphere {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .smoke-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: waft 20s infinite alternate ease-in-out;
+  }
+
+  .s1 { width: 300px; height: 300px; background: var(--sol-cyan); top: 20%; left: 10%; opacity: 0.15; animation-delay: 0s; }
+  .s2 { width: 250px; height: 350px; background: var(--sol-blue); top: 40%; right: 10%; opacity: 0.1; animation-delay: -5s; }
+  .s3 { width: 400px; height: 200px; background: var(--sol-base01); bottom: -10%; left: 30%; opacity: 0.2; animation-delay: -12s; }
+  .s4 { width: 200px; height: 300px; background: var(--sol-magenta); top: -5%; right: 20%; opacity: 0.08; animation-delay: -8s; }
+
+  @keyframes waft {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.05; }
+    33% { opacity: 0.15; }
+    66% { opacity: 0.12; }
+    100% { transform: translate(100px, -80px) scale(1.4) rotate(45deg); opacity: 0.05; }
+  }
+
+  .logo-container {
+    position: relative;
+    width: 350px;
+    height: 450px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  .svg-mark {
+    width: 180px;
+    height: 180px;
+    margin-bottom: 40px;
+    overflow: visible;
+  }
+
+  .staff-line {
+    fill: none;
+    stroke: var(--sol-base01);
+    stroke-width: 0.5;
+    opacity: 0.6;
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: drawStaff 3s ease-in-out forwards;
+  }
+
+  /* The core elegant stroke */
+  .geometric-s {
+    fill: none;
+    stroke: var(--sol-base3);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 220;
+    stroke-dashoffset: 220;
+    animation: drawPath 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1s;
+    filter: drop-shadow(0 4px 15px rgba(253, 246, 227, 0.4));
+  }
+
+  /* Offset subtle ghost stroke to create an engraved elegance */
+  .geometric-s-ghost {
+    fill: none;
+    stroke: var(--sol-cyan);
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 220;
+    stroke-dashoffset: 220;
+    animation: drawPath 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1.3s;
+    transform: translate(-3px, 3px);
+    opacity: 0.6;
+  }
+
+  .note-head {
+    fill: var(--sol-base3);
+    transform-origin: 30px 80px;
+    opacity: 0;
+    transform: scale(0.5) rotate(-30deg);
+    animation: popHead 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 3.8s;
+  }
+  
+  .note-head-ghost {
+    fill: var(--sol-cyan);
+    transform-origin: 30px 80px;
+    opacity: 0;
+    transform: scale(0.5) rotate(-30deg) translate(-3px, 3px);
+    animation: popHead 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 4.1s;
+  }
+
+  /* Text Treatment */
+  .brand-text {
+    font-family: 'Cinzel', serif; /* Exquisitely elegant luxury font */
+    font-size: 38px;
+    font-weight: 400;
+    letter-spacing: 28px;
+    color: var(--sol-base3);
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: fadeUp 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 2.5s;
+    padding-left: 28px; 
+    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  .brand-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 14px;
+    color: var(--sol-cyan);
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeUp 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 3s;
+    margin-top: 15px;
+    padding-left: 14px;
+  }
+
+  @keyframes drawStaff {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes drawPath {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes popHead {
+    to { opacity: 1; transform: scale(1) rotate(-15deg); }
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="atmosphere">
+  <div class="smoke-blob s1"></div>
+  <div class="smoke-blob s2"></div>
+  <div class="smoke-blob s3"></div>
+  <div class="smoke-blob s4"></div>
+</div>
+
+<div class="logo-container">
+  <svg class="svg-mark" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- Ethereal Staff Lines -->
+    <path class="staff-line" d="M -40 40 Q 50 38 140 40" style="animation-delay: 0.2s;" />
+    <path class="staff-line" d="M -40 60 Q 50 62 140 60" style="animation-delay: 0.4s;" />
+    <path class="staff-line" d="M -40 80 Q 50 78 140 80" style="animation-delay: 0.6s;" />
+    <path class="staff-line" d="M -40 100 Q 50 102 140 100" style="animation-delay: 0.8s;" />
+
+    <g>
+      <!-- Offset Ghost Line for 3D/Engraved Luxury effect -->
+      <path class="geometric-s-ghost" d="M 30 80 
+               A 20 20 0 0 0 50 100 
+               A 20 20 0 0 0 70 80 
+               A 20 20 0 0 0 50 60 
+               A 16 16 0 0 1 34 44 
+               A 16 16 0 0 1 50 28 
+               A 16 16 0 0 1 66 44" />
+      <ellipse cx="30" cy="80" rx="9" ry="6" class="note-head-ghost" />
+
+      <!-- Main Delicate S Stroke -->
+      <path class="geometric-s" d="M 30 80 
+               A 20 20 0 0 0 50 100 
+               A 20 20 0 0 0 70 80 
+               A 20 20 0 0 0 50 60 
+               A 16 16 0 0 1 34 44 
+               A 16 16 0 0 1 50 28 
+               A 16 16 0 0 1 66 44" />
+      <ellipse cx="30" cy="80" rx="9" ry="6" class="note-head" />
+    </g>
+  </svg>
+
+  <div class="brand-text">SETLIST</div>
+  <div class="brand-sub">Premium Audio</div>
+</div>
+
+</body>
+</html>

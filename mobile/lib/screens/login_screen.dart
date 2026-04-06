@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/solarized_theme.dart';
+import '../widgets/animated_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,41 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo / Branding
-            const Icon(
-              Icons.music_note_rounded,
-              size: 100,
-              color: SolarizedTheme.blue,
-            )
-            .animate()
-            .fade(duration: 800.ms)
-            .scale(delay: 200.ms)
-            .shimmer(delay: 1000.ms, duration: 1500.ms, color: SolarizedTheme.cyan),
+            const AnimatedSolarizedLogo(width: 320, height: 350),
             
-            const SizedBox(height: 24),
-            
-            Text(
-              "SETLIST",
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: SolarizedTheme.blue,
-                    fontSize: 48,
-                    letterSpacing: 4,
-                  ),
-            )
-            .animate()
-            .fade(delay: 400.ms)
-            .slideY(begin: 0.2, end: 0),
-            
-            Text(
-              "The Music Clash Game",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: SolarizedTheme.cyan,
-                    letterSpacing: 1.2,
-                  ),
-            )
-            .animate()
-            .fade(delay: 600.ms),
-            
-            const SizedBox(height: 80),
+            const SizedBox(height: 40),
             
             // Login Button
             if (_isLoading)
@@ -99,17 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
               .fade(delay: 1000.ms)
               .scale(delay: 1100.ms, curve: Curves.elasticOut),
               
-            const SizedBox(height: 16),
-            
-            Text(
-              "Level 1 awaits your judgment.",
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: SolarizedTheme.base01,
-                    fontStyle: FontStyle.italic,
-                  ),
-            )
-            .animate()
-            .fade(delay: 1500.ms),
+
           ],
         ),
       ),
