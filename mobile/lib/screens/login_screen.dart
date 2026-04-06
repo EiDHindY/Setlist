@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/solarized_theme.dart';
 import '../widgets/animated_logo.dart';
 import '../widgets/exit_dialog.dart';
+import '../widgets/branded_loader.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -66,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
             
             // Login Button
             if (_isLoading)
-              const CircularProgressIndicator(color: SolarizedTheme.blue)
+              const BrandedLoader(size: 60)
             else
               ElevatedButton.icon(
                 onPressed: _handleGoogleSignIn,

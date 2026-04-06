@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import AnimatedLogo from "@/components/AnimatedLogo";
+import AnimatedLoader from "@/components/AnimatedLoader";
 
 export default function Home() {
   const [session, setSession] = useState<any>(null);
@@ -41,14 +42,8 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#002b36] flex items-center justify-center flex-col gap-4">
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        >
-          <Music className="text-[#2aa198] w-12 h-12" />
-        </motion.div>
-        <span className="text-[#93a1a1] animate-pulse font-mono tracking-widest text-xs">INITIALIZING ECOSYSTEM...</span>
+      <div className="min-h-screen bg-[#002b36] flex items-center justify-center">
+        <AnimatedLoader />
       </div>
     );
   }

@@ -5,6 +5,7 @@ import 'theme/solarized_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
+import 'widgets/branded_loader.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +53,13 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: SolarizedTheme.base03,
+            body: Center(child: BrandedLoader(size: 100)),
+          );
+        }
+
         final session = snapshot.data?.session;
         
         // If we have a session, trigger backend sync and go to the Smart Home Page
