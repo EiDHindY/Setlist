@@ -8,6 +8,7 @@ These rules are ABSOLUTE. Any agent (including me) working on this project MUST 
 
 1.  **THE COMPASS RULE**: EVERY session, turn, or major context shift MUST begin with a **"Compass Summary"** pulled directly from `.agent/TASK.md`. 🧭✨
 2.  **PLATFORM CLARITY**: The summary must explicitly state the **Active Task**, the **Platform** (Mobile/Web/Backend), and the **Next Step** to ensure DoD and the Agent are always in sync. 📱🌐🏗️
+3.  **DODO'S TERRITORY**: **NEVER edit the `.agent/TASK.md` file.** This is DoD's (the user's) sole territory. The Agent only reads it for context. 🛑🏯
 
 ---
 
