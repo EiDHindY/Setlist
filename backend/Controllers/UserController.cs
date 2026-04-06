@@ -31,10 +31,14 @@ public class UserController : ControllerBase
                 Id = request.Id,
                 Email = request.Email,
                 FullName = request.FullName,
+                DisplayName = request.FullName, // Default DisplayName to their Google name initially
                 AvatarUrl = request.AvatarUrl,
                 ExperiencePoints = 0,
                 Level = 1,
-                CreatedAt = DateTime.UtcNow
+                IsPremium = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                LastActiveAt = DateTime.UtcNow
             };
             _context.Users.Add(user);
         }
@@ -44,6 +48,7 @@ public class UserController : ControllerBase
             user.FullName = request.FullName;
             user.AvatarUrl = request.AvatarUrl;
             user.UpdatedAt = DateTime.UtcNow;
+            user.LastActiveAt = DateTime.UtcNow; // Update their last active time
         }
 
         await _context.SaveChangesAsync();

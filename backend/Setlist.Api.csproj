@@ -25,4 +25,11 @@
     <ProjectReference Include="Shared\Setlist.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Shared\**" />
+    <Content Remove="Shared\**" />
+    <EmbeddedResource Remove="Shared\**" />
+    <None Remove="Shared\**" />
+  </ItemGroup>
+
 </Project>
