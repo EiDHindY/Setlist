@@ -1,0 +1,58 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Kitchen (Backend)",
+      "type": "shell",
+      "command": "cd backend && dotnet watch",
+      "presentation": {
+        "group": "setlist",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Storefront (Web)",
+      "type": "shell",
+      "command": "cd web && npm run dev",
+      "presentation": {
+        "group": "setlist",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Mobile App (Mi 10T)",
+      "type": "shell",
+      "command": "adb connect 10.237.97.141:5555 && cd mobile && flutter run -d 10.237.97.141:5555",
+      "presentation": {
+        "group": "setlist",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Security (Logs)",
+      "type": "shell",
+      "command": "adb logcat",
+      "presentation": {
+        "group": "setlist",
+        "panel": "dedicated"
+      },
+    },
+    {
+      "label": "Start All Ecosystem",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "Kitchen (Backend)",
+        "Storefront (Web)",
+        "Mobile App (Mi 10T)",
+        "Security (Logs)"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

@@ -15,9 +15,9 @@ web/build/
 mobile/.expo/
 mobile/web-build/
 
-# C# and .NET Core
-backend/bin/
-backend/obj/
+# C# and .NET Core Build Artifacts (Global)
+**/bin/
+**/obj/
 backend/appsettings.Development.json
 backend/appsettings.*.json
 
