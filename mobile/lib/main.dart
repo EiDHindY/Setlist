@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/solarized_theme.dart';
 import 'screens/login_screen.dart';
@@ -7,6 +8,17 @@ import 'services/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Enter fullscreen immersive mode (hides status bar and navigation bar)
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  
+  // Make system overlays fully transparent so app draws edge-to-edge
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
   
   // Initialize Supabase with the project credentials
   await Supabase.initialize(

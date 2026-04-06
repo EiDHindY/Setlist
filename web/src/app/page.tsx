@@ -10,6 +10,7 @@ export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -68,7 +69,12 @@ export default function Home() {
 
               {/* Login Actions */}
               <div className="bg-[#073642]/50 backdrop-blur-xl rounded-3xl p-8 border border-[#586e75]/10 shadow-2xl">
-                <div className="animate-float w-full">
+                <div 
+                  className="animate-float w-full"
+                  style={{ animationPlayState: isHovered ? 'paused' : 'running' }}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                >
                   <button
                     onClick={signInWithGoogle}
                     className="w-full group relative flex items-center justify-center gap-3 px-6 py-4 bg-[#fdf6e3] hover:bg-[#93a1a1] text-[#002b36] rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.95] overflow-hidden shadow-lg hover:shadow-xl cursor-pointer"

@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/solarized_theme.dart';
 import '../services/auth_service.dart';
+import '../widgets/exit_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -51,7 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final xp = _backendUser?['experiencePoints'] ?? 0;
     final xpFactor = (xp % 100) / 100.0;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await showExitDialog(context);
+        if (shouldExit) SystemNavigator.pop();
+      },
+      child: Scaffold(
       backgroundColor: SolarizedTheme.base03,
       body: SafeArea(
         child: Padding(
@@ -198,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
