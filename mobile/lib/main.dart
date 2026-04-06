@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/solarized_theme.dart';
 import 'screens/login_screen.dart';
-
 import 'screens/home_screen.dart';
+import 'services/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,8 +30,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-import 'services/auth_service.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
