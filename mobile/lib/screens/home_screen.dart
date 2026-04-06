@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/solarized_theme.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,10 +14,43 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _user = Supabase.instance.client.auth.currentUser;
+  final _supabaseUser = Supabase.instance.client.auth.currentUser;
+  Map<String, dynamic>? _backendUser;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBackendProfile();
+  }
+
+  Future<void> _fetchBackendProfile() async {
+    if (_supabaseUser == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.8.109:5169/api/user/${_supabaseUser.id}'),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _backendUser = jsonDecode(response.body);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('🛑 Error fetching profile: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Current Level and XP (Prefer Backend data, fallback to level 1)
+    final level = _backendUser?['level'] ?? 1;
+    final xp = _backendUser?['experiencePoints'] ?? 0;
+    final xpFactor = (xp % 100) / 100.0;
+
     return Scaffold(
       backgroundColor: SolarizedTheme.base03,
       body: SafeArea(
@@ -26,13 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
               // Profile Header
               Row(
                 children: [
-                   CircleAvatar(
+                  CircleAvatar(
                     radius: 30,
                     backgroundColor: SolarizedTheme.base02,
-                    backgroundImage: _user?.userMetadata?['avatar_url'] != null 
-                        ? NetworkImage(_user!.userMetadata!['avatar_url']) 
+                    backgroundImage: _supabaseUser?.userMetadata?['avatar_url'] != null 
+                        ? NetworkImage(_supabaseUser!.userMetadata!['avatar_url']) 
                         : null,
-                    child: _user?.userMetadata?['avatar_url'] == null 
+                    child: _supabaseUser?.userMetadata?['avatar_url'] == null 
                         ? const Icon(Icons.person, color: SolarizedTheme.blue) 
                         : null,
                   )
@@ -51,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: SolarizedTheme.cyan),
                         ),
                         Text(
-                          _user?.userMetadata?['full_name'] ?? "Music Legend",
+                          _supabaseUser?.userMetadata?['full_name'] ?? "Music Legend",
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             color: SolarizedTheme.base2,
                             fontSize: 24,
@@ -69,14 +105,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: SolarizedTheme.blue, width: 1),
                     ),
-                    child: const Text(
-                      "LVL 1",
-                      style: TextStyle(color: SolarizedTheme.blue, fontWeight: FontWeight.bold),
+                    child: Text(
+                      "LVL $level",
+                      style: const TextStyle(color: SolarizedTheme.blue, fontWeight: FontWeight.bold),
                     ),
                   )
                   .animate()
                   .fade(delay: 800.ms)
                   .slideX(begin: 0.5, end: 0),
+                  
+                  // Sign Out Button
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: SolarizedTheme.base01),
+                    onPressed: () async {
+                      await AuthService.signOut();
+                    },
+                  )
+                  .animate()
+                  .fade(delay: 1000.ms),
                 ],
               ),
               
@@ -90,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("EXPERIENCE", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: SolarizedTheme.base01, letterSpacing: 1.5)),
-                      const Text("0 / 100 XP", style: TextStyle(color: SolarizedTheme.cyan, fontSize: 12)),
+                      Text("${(xp % 100).toInt()} / 100 XP", style: const TextStyle(color: SolarizedTheme.cyan, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -103,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
-                      widthFactor: 0.1, // Placeholder for XP
+                      widthFactor: xpFactor > 0 ? xpFactor : 0.01,
                       child: Container(
                         decoration: BoxDecoration(
                           color: SolarizedTheme.blue,

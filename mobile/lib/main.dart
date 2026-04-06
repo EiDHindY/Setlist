@@ -31,6 +31,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+import 'services/auth_service.dart';
+
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -42,8 +44,11 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
         
-        // If we have a session, go to the Smart Home Page
+        // If we have a session, trigger backend sync and go to the Smart Home Page
         if (session != null) {
+          // Trigger the "Hello!" to the C# Backend (Async)
+          AuthService.syncUserWithBackend(session);
+          
           return const HomeScreen();
         } 
         
