@@ -4,6 +4,13 @@ These rules are ABSOLUTE. Any agent (including me) working on this project MUST 
 
 ---
 
+## 🧭 THE COMPASS (Mandatory Task Sync)
+
+1.  **THE COMPASS RULE**: EVERY session, turn, or major context shift MUST begin with a **"Compass Summary"** pulled directly from `.agent/TASK.md`. 🧭✨
+2.  **PLATFORM CLARITY**: The summary must explicitly state the **Active Task**, the **Platform** (Mobile/Web/Backend), and the **Next Step** to ensure DoD and the Agent are always in sync. 📱🌐🏗️
+
+---
+
 ## 🚫 THE RED LINES (Non-Negotiables)
 
 1.  **NO SURPRISE CODE:** NEVER write a single line of project code without the user (DoD/DoDo) explicitly agreeing to it first.
