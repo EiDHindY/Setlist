@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Setlist.Shared.csproj" />
+    <ProjectReference Include="Shared\Setlist.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ WORKDIR /src
 
 # Copy csproj and restore as distinct layers
 COPY ["Setlist.Api.csproj", "./"]
+COPY ["Shared/Setlist.Shared.csproj", "Shared/"]
 RUN dotnet restore "./Setlist.Api.csproj"
 
 # Copy everything else and build app
