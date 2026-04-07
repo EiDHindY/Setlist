@@ -57,6 +57,8 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "icon_master.png"
+  image_path_android: "icon_rounded.png"
+  image_path_ios: "icon_ios.png"
   web:
     generate: true
     image_path: "icon_master.png"
