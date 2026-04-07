@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listen Party Icons (Batch 6)</title>
+    <style>
+        body {
+            background-color: #002b36;
+            color: #93a1a1;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            gap: 40px;
+        }
+
+        h2 {
+            color: #fdf6e3;
+            text-align: center;
+            font-weight: 300;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .icon-container {
+            width: 140px;
+            height: 140px;
+            background-color: rgba(7, 54, 66, 0.7);
+            border-radius: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        svg {
+            width: 70px;
+            height: 70px;
+            overflow: visible;
+        }
+
+        /* ====== Variation 16: The Hand-to-Hand Note ====== */
+        .var16 .hand { fill: #586e75; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .var16 .note { opacity: 0; transform: scale(0); transition: all 0.5s; transform-origin: center; fill: #fdf6e3; }
+
+        .icon-container:hover .var16 .h1 { transform: translateX(10px); fill: #2aa198; }
+        .icon-container:hover .var16 .h2 { transform: translateX(-10px); fill: #d33682; }
+        .icon-container:hover .var16 .note { opacity: 1; transform: scale(1.2); animation: noteGlow 1s infinite alternate; }
+
+        @keyframes noteGlow { 0% { filter: drop-shadow(0 0 5px #fdf6e3); } 100% { filter: drop-shadow(0 0 15px #fdf6e3); transform: scale(1.4); } }
+
+        /* ====== Variation 17: Synchronized Playheads ====== */
+        .var17 .track { stroke: #002b36; stroke-width: 4; fill: none; }
+        .var17 .playhead { transition: all 0.3s; transform-origin: center; }
+        
+        .icon-container:hover .var17 .track { stroke: #586e75; }
+        .icon-container:hover .var17 .p1 { fill: #2aa198; animation: circleOrbit 2.5s infinite linear; }
+        .icon-container:hover .var17 .p2 { fill: #d33682; animation: circleOrbit 2.5s infinite linear 0.2s; }
+        .icon-container:hover .var17 .p3 { fill: #fdf6e3; animation: circleOrbit 2.5s infinite linear 0.4s; }
+
+        @keyframes circleOrbit {
+            from { transform: rotate(0deg) translateX(30px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(30px) rotate(-360deg); }
+        }
+
+        /* ====== Variation 18: The Ripple Invitation ====== */
+        .var18 .note { fill: #586e75; transition: all 0.3s; transform-origin: center; }
+        .var18 .ripple {
+            stroke: #2aa198;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0;
+            transform-origin: center;
+        }
+
+        .icon-container:hover .var18 .note { fill: #fdf6e3; transform: scale(1.2); }
+        .icon-container:hover .var18 .r1 { animation: spreadRipple 1.2s infinite ease-out; }
+        .icon-container:hover .var18 .r2 { animation: spreadRipple 1.2s infinite ease-out 0.4s; }
+        .icon-container:hover .var18 .r3 { animation: spreadRipple 1.2s infinite ease-out 0.8s; }
+
+        @keyframes spreadRipple {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <p style="text-align: center; color: #586e75; font-size: 0.9rem; max-width: 400px; margin-top: -20px;">
+        Batch 6: Direct Sharing & Unified Movement.
+    </p>
+
+    <!-- Variation 16 -->
+    <div>
+        <h2>16. Hand-to-Hand Sync<br><small style="color:#586e75; font-size: 0.8rem;">Two users reaching out to share a single glowing note</small></h2>
+        <div class="icon-container">
+            <div class="var16">
+                <svg viewBox="0 0 100 100">
+                    <!-- Hands (geometric) -->
+                    <path class="hand h1" d="M10 50 Q15 40 25 45 L35 50 L25 55 Q15 60 10 50" />
+                    <path class="hand h2" d="M90 50 Q85 40 75 45 L65 50 L75 55 Q85 60 90 50" />
+                    <!-- Shared Note -->
+                    <circle class="note" cx="50" cy="50" r="10" />
+                    <path class="note" d="M50 50 L50 35 L60 38 L60 43 L53 40 L53 50 Z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variation 17 -->
+    <div>
+        <h2>17. Synced Playheads<br><small style="color:#586e75; font-size: 0.8rem;">Multiple user markers orbiting the same track in lockstep</small></h2>
+        <div class="icon-container">
+            <div class="var17">
+                <svg viewBox="0 0 100 100">
+                    <circle class="track" cx="50" cy="50" r="30" />
+                    <!-- User Playheads -->
+                    <circle class="playhead p1" cx="50" cy="50" r="4" />
+                    <circle class="playhead p2" cx="50" cy="50" r="4" />
+                    <circle class="playhead p3" cx="50" cy="50" r="4" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variation 18 -->
+    <div>
+        <h2>18. The Pulse Invitation<br><small style="color:#586e75; font-size: 0.8rem;">A central rhythm sending out ripples to find other listeners</small></h2>
+        <div class="icon-container">
+            <div class="var18">
+                <svg viewBox="0 0 100 100">
+                    <!-- Ripples -->
+                    <circle class="ripple r1" cx="50" cy="50" r="10" />
+                    <circle class="ripple r2" cx="50" cy="50" r="10" />
+                    <circle class="ripple r3" cx="50" cy="50" r="10" />
+                    <!-- Main Note -->
+                    <path class="note" d="M45 60 A8 6 0 1 0 53 54 L53 35 L65 38 L65 43 L56 40 L56 60 Z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

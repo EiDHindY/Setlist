@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listen Party Icons (Batch 3)</title>
+    <style>
+        body {
+            background-color: #002b36;
+            color: #93a1a1;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            gap: 40px;
+        }
+
+        h2 {
+            color: #fdf6e3;
+            text-align: center;
+            font-weight: 300;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .icon-container {
+            width: 140px;
+            height: 140px;
+            background-color: rgba(7, 54, 66, 0.7);
+            border-radius: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        svg {
+            width: 70px;
+            height: 70px;
+            overflow: visible;
+        }
+
+        /* ====== Variation 7: Network Sync Grid ====== */
+        .var7 .center { fill: #586e75; transition: all 0.3s; }
+        .var7 .node { fill: #586e75; transition: all 0.3s; opacity: 0.4; }
+        .var7 .line { stroke: #586e75; stroke-width: 1.5; opacity: 0.2; transition: all 0.3s; }
+
+        .icon-container:hover .var7 .center { fill: #d33682; filter: drop-shadow(0 0 10px #d33682); transform: scale(1.1); }
+        .icon-container:hover .var7 .node { fill: #2aa198; opacity: 1; animation: pulseNode 1.5s infinite; }
+        .icon-container:hover .var7 .line { stroke: #2aa198; opacity: 0.6; animation: flowLine 1.5s infinite; }
+
+        @keyframes pulseNode {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px #2aa198); }
+            50% { transform: scale(1.3); filter: drop-shadow(0 0 8px #2aa198); }
+        }
+        @keyframes flowLine {
+            0% { stroke-dasharray: 0, 100; }
+            100% { stroke-dasharray: 100, 0; }
+        }
+
+        /* ====== Variation 8: Dual-Turntable Groove ====== */
+        .var8 .disc { fill: #586e75; transform-origin: center; transition: all 0.4s ease-out; }
+        .var8 .center-dot { fill: #002b36; }
+        
+        .icon-container:hover .var8 .disc-1 {
+            fill: #2aa198;
+            transform: translateX(-15px) rotate(360deg);
+            animation: spinDisc 2s linear infinite;
+        }
+        .icon-container:hover .var8 .disc-2 {
+            fill: #d33682;
+            transform: translateX(15px) rotate(-360deg);
+            animation: spinDiscRev 2s linear infinite;
+        }
+
+        @keyframes spinDisc { 100% { transform: translateX(-15px) rotate(360deg); } }
+        @keyframes spinDiscRev { 100% { transform: translateX(15px) rotate(-360deg); } }
+
+        /* ====== Variation 9: The Audio Bridge ====== */
+        .var9 .note { fill: #586e75; transition: all 0.3s; }
+        .var9 .bridge {
+            stroke: #586e75;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 4, 2;
+            transition: all 0.3s;
+        }
+
+        .icon-container:hover .var9 .note-left { fill: #2aa198; transform: translateX(-5px); }
+        .icon-container:hover .var9 .note-right { fill: #2aa198; transform: translateX(5px); }
+        .icon-container:hover .var9 .bridge {
+            stroke: #d33682;
+            animation: vibrateBridge 0.2s infinite;
+        }
+
+        @keyframes vibrateBridge {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <p style="text-align: center; color: #586e75; font-size: 0.9rem; max-width: 400px; margin-top: -20px;">
+        Batch 3: Sync Networks & Shared Turntables.
+    </p>
+
+    <!-- Variation 7 -->
+    <div>
+        <h2>7. Network Sync Grid<br><small style="color:#586e75; font-size: 0.8rem;">A central hub connecting multiple nodes in real-time</small></h2>
+        <div class="icon-container">
+            <div class="var7">
+                <svg viewBox="0 0 100 100">
+                    <line class="line" x1="50" y1="50" x2="20" y2="20" />
+                    <line class="line" x1="50" y1="50" x2="80" y2="20" />
+                    <line class="line" x1="50" y1="50" x2="50" y2="85" />
+                    <circle class="center" cx="50" cy="50" r="10" />
+                    <circle class="node" cx="20" cy="20" r="5" />
+                    <circle class="node" cx="80" cy="20" r="5" />
+                    <circle class="node" cx="50" cy="85" r="5" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variation 8 -->
+    <div>
+        <h2>8. Dual-Turntable Groove<br><small style="color:#586e75; font-size: 0.8rem;">Two discs sliding apart and spinning in sync</small></h2>
+        <div class="icon-container">
+            <div class="var8">
+                <svg viewBox="0 0 100 100">
+                    <g class="disc disc-1">
+                        <circle cx="50" cy="50" r="25" />
+                        <circle class="center-dot" cx="50" cy="50" r="5" />
+                    </g>
+                    <g class="disc disc-2">
+                        <circle cx="50" cy="50" r="25" />
+                        <circle class="center-dot" cx="50" cy="50" r="5" />
+                    </g>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variation 9 -->
+    <div>
+        <h2>9. The Audio Bridge<br><small style="color:#586e75; font-size: 0.8rem;">Two notes physically linked by a vibrating audio cable</small></h2>
+        <div class="icon-container">
+            <div class="var9">
+                <svg viewBox="0 0 100 100">
+                    <path class="bridge" d="M30 50 Q50 20 70 50" />
+                    <path class="note note-left" d="M25 60 A6 5 0 1 0 31 55 L31 35 L40 38 L40 43 L34 40 L34 60 Z" />
+                    <path class="note note-right" d="M65 60 A6 5 0 1 0 71 55 L71 35 L80 38 L80 43 L74 40 L74 60 Z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

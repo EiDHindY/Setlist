@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/solarized_theme.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'layouts/main_layout.dart';
 import 'services/auth_service.dart';
 import 'widgets/branded_loader.dart';
 
@@ -67,7 +67,7 @@ class AuthWrapper extends StatelessWidget {
           // Trigger the "Hello!" to the C# Backend (Async)
           AuthService.syncUserWithBackend(session);
           
-          return const HomeScreen();
+          return const MainLayout();
         } 
         
         // No session? Stay on the Solarized Login screen
