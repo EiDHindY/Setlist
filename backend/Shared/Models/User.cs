@@ -34,4 +34,9 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation Properties
+    public virtual ICollection<Folder> Folders { get; set; } = new List<Folder>();
+    public virtual ICollection<MusicSetlist> Setlists { get; set; } = new List<MusicSetlist>();
+    public virtual ICollection<UserSong> UserSongs { get; set; } = new List<UserSong>();
 }

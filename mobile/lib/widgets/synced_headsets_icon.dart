@@ -37,10 +37,10 @@ class SyncedHeadsetsIcon extends StatelessWidget {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutBack,
-            left: isSelected ? 4 : 10,
-            top: isSelected ? 4 : 10,
+            left: isSelected ? 4 : 8,
+            top: isSelected ? 4 : 8,
             child: Opacity(
-              opacity: isSelected ? 1.0 : 0.5,
+              opacity: isSelected ? 1.0 : 0.4,
               child: Icon(
                 Icons.headphones_rounded,
                 size: size,
@@ -53,12 +53,12 @@ class SyncedHeadsetsIcon extends StatelessWidget {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutBack,
-            right: isSelected ? 4 : 10,
-            bottom: isSelected ? 4 : 10,
+            right: isSelected ? 4 : 8,
+            bottom: isSelected ? 4 : 8,
             child: Icon(
               Icons.headphones_rounded,
               size: size,
-              color: isSelected ? SolarizedTheme.magenta : SolarizedTheme.base01.withOpacity(0.6),
+              color: isSelected ? SolarizedTheme.magenta : SolarizedTheme.base01.withOpacity(0.5),
             ),
           ),
         ],

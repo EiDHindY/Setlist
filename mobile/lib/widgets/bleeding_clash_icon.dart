@@ -23,7 +23,7 @@ class _BleedingClashIconState extends State<BleedingClashIcon> with SingleTicker
       width: widget.size + 10,
       height: widget.size + 15, // Extra height for the drips
       child: Stack(
-        alignment: Alignment.topCenter,
+        alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
           // The base music note
@@ -43,7 +43,7 @@ class _BleedingClashIconState extends State<BleedingClashIcon> with SingleTicker
             // Drip 1
             Positioned(
               left: (widget.size / 2) - 6,
-              top: widget.size - 8,
+              top: widget.size + 2, // Start at the bottom of the note
               child: _buildDrip().animate(onPlay: (controller) => controller.repeat())
                 .fade(duration: 200.ms)
                 .scaleY(begin: 0.5, end: 1.5, duration: 600.ms, curve: Curves.easeIn) // Stretch down
@@ -53,7 +53,7 @@ class _BleedingClashIconState extends State<BleedingClashIcon> with SingleTicker
             // Drip 2
             Positioned(
               left: (widget.size / 2) + 2,
-              top: widget.size - 8,
+              top: widget.size + 2, // Start at the bottom of the note
               child: _buildDrip().animate(onPlay: (controller) => controller.repeat(), delay: 600.ms)
                 .fade(duration: 200.ms)
                 .scaleY(begin: 0.5, end: 1.5, duration: 600.ms, curve: Curves.easeIn)
