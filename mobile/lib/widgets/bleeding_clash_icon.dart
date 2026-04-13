@@ -20,8 +20,8 @@ class _BleedingClashIconState extends State<BleedingClashIcon> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: widget.size + 10,
-      height: widget.size + 15, // Extra height for the drips
+      width: widget.size,
+      height: widget.size,
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,

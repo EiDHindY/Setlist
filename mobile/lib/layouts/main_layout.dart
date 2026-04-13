@@ -11,30 +11,21 @@ import '../widgets/bleeding_clash_icon.dart';
 import '../widgets/bumping_headphones_icon.dart';
 import '../widgets/synced_headsets_icon.dart';
 import '../widgets/small_logo_icon.dart';
+import '../widgets/producer_icon.dart';
+import '../widgets/mixer_icon.dart';
+import '../widgets/song_icon.dart';
+import '../widgets/album_icon.dart';
+import '../widgets/setlist_icon.dart';
+import '../models/nav_models.dart';
+import '../widgets/nav_bar/main_nav_item.dart';
+import '../widgets/nav_bar/sub_nav_item.dart';
 import '../screens/home_screen.dart';
 import '../screens/library_screen.dart';
 import '../screens/clash_screen.dart';
 import '../screens/party_screen.dart';
 import '../screens/profile_screen.dart';
 
-class _NavPoint {
-  final int mainIndex;
-  final int? subNavIndex;
-  final bool isSubNavMode;
-  const _NavPoint(this.mainIndex, {this.subNavIndex, this.isSubNavMode = false});
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _NavPoint &&
-          runtimeType == other.runtimeType &&
-          mainIndex == other.mainIndex &&
-          subNavIndex == other.subNavIndex &&
-          isSubNavMode == other.isSubNavMode;
-
-  @override
-  int get hashCode => mainIndex.hashCode ^ subNavIndex.hashCode ^ isSubNavMode.hashCode;
-}
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -45,7 +36,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   int _currentIndex = 0;
-  final List<_NavPoint> _navigationHistory = [const _NavPoint(0)];
+  final List<NavPoint> _navigationHistory = [const NavPoint(0)];
   final _supabaseUser = Supabase.instance.client.auth.currentUser;
 
   // Sub-nav morphing state
@@ -70,28 +61,121 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   // Track the last tab that triggered a hint
   int? _lastHintIndex;
 
-  List<Widget> _buildScreens() => [
-    const HomeScreen(),
-    const LibraryScreen(),
-    const ClashScreen(),
-    const PartyScreen(),
-    ProfileScreen(
+  late List<Widget?> _screens;
+  late List<AnimationController> _fadeControllers;
+  late List<Animation<double>> _fadeAnimations;
+  final Map<int, Widget> _cachedSubNavRows = {};
+
+  void _initScreens() {
+    _screens = List.filled(5, null);
+    
+    // Always pre-load Home
+    _screens[0] = const HomeScreen();
+    
+    _fadeControllers = List.generate(5, (i) => AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: i == 0 ? 1.0 : 0.0,
+    ));
+
+    _fadeAnimations = _fadeControllers.map((c) => CurvedAnimation(
+      parent: c,
+      curve: Curves.easeInOut,
+    )).toList();
+
+    // Lazy load Collection tab after the first frame to keep startup instant
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _screens[1] = const LibraryScreen();
+        });
+      }
+    });
+  }
+
+  void _ensureScreenLoaded(int index) {
+    if (_screens[index] == null) {
+      setState(() {
+        if (index == 4) {
+          _screens[4] = _buildProfileScreen();
+        } else {
+          _screens[index] = _getScreenByIndex(index);
+        }
+      });
+    }
+  }
+
+  Widget _getScreenByIndex(int index) {
+    switch (index) {
+      case 0: return const HomeScreen();
+      case 1: return const LibraryScreen();
+      case 2: return const ClashScreen();
+      case 3: return const PartyScreen();
+      case 4: return _buildProfileScreen();
+      default: return const SizedBox.shrink();
+    }
+  }
+
+  void _preCacheSubNavRows(BoxConstraints constraints) {
+    if (_cachedSubNavRows.isNotEmpty) return;
+    for (var entry in _subNavConfigs.entries) {
+      _cachedSubNavRows[entry.key] = _buildSubNavRow(constraints, tabIndex: entry.key);
+    }
+  }
+
+  Widget _buildProfileScreen() {
+    return ProfileScreen(
       user: _supabaseUser,
       autoOpenSubNav: _autoOpenSubNav,
       showFloatingLabels: _showFloatingLabels,
-      onToggleAutoOpen: (val) => setState(() => _autoOpenSubNav = val),
-      onToggleFloatingLabels: (val) => setState(() => _showFloatingLabels = val),
-    ),
-  ];
+      onToggleAutoOpen: (val) {
+        setState(() {
+          _autoOpenSubNav = val;
+          _updateProfileScreen();
+        });
+      },
+      onToggleFloatingLabels: (val) {
+        setState(() {
+          _showFloatingLabels = val;
+          _updateProfileScreen();
+        });
+      },
+    );
+  }
 
-  final Map<int, List<_SubNavItem>> _subNavConfigs = {
+  void _updateProfileScreen() {
+    if (_screens[4] != null) {
+      _screens[4] = _buildProfileScreen();
+    }
+  }
+
+
+  final Map<int, List<SubNavItemData>> _subNavConfigs = {
     1: [
-      _SubNavItem(icon: Icons.music_note_rounded, label: 'Songs'),
-      _SubNavItem(icon: Icons.queue_music_rounded, label: 'Setlists'),
-      _SubNavItem(icon: Icons.album_rounded, label: 'Albums'),
-      _SubNavItem(icon: Icons.person_rounded, label: 'Artists'),
-      _SubNavItem(icon: Icons.headset_rounded, label: 'Producers'),
-      _SubNavItem(icon: Icons.tune_rounded, label: 'Mixers'),
+      SubNavItemData(
+        label: 'Songs',
+        customIconBuilder: (isSelected) => SongIcon(isSelected: isSelected),
+      ),
+      SubNavItemData(
+        label: 'Setlists',
+        customIconBuilder: (isSelected) => SetlistIcon(isSelected: isSelected),
+      ),
+      SubNavItemData(
+        label: 'Albums',
+        customIconBuilder: (isSelected) => AlbumIcon(isSelected: isSelected),
+      ),
+      SubNavItemData(icon: Icons.person_rounded, label: 'Artists'),
+      SubNavItemData(
+        label: 'Producers',
+        customIconBuilder: (isSelected) => ProducerIcon(
+          isSelected: isSelected,
+          variant: ProducerIconVariant.monitor,
+        ),
+      ),
+      SubNavItemData(
+        label: 'Mixers',
+        customIconBuilder: (isSelected) => MixerIcon(isSelected: isSelected),
+      ),
     ],
   };
 
@@ -127,12 +211,17 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 400),
       vsync: this,
     )..value = 1.0; // Start at full expansion for the initial tab
+
+    _initScreens();
   }
 
   @override
   void dispose() {
     _morphController.dispose();
     _expansionController.dispose();
+    for (var c in _fadeControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -148,14 +237,14 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
       _isSubNavMode = true;
       _subNavIndex = 0;
       if (addToHistory) {
-        _pushHistory(_NavPoint(_currentIndex, subNavIndex: 0, isSubNavMode: true));
+        _pushHistory(NavPoint(_currentIndex, subNavIndex: 0, isSubNavMode: true));
       }
     });
     HapticFeedback.mediumImpact();
     _morphController.forward();
   }
 
-  void _pushHistory(_NavPoint point) {
+  void _pushHistory(NavPoint point) {
     if (_navigationHistory.isEmpty || _navigationHistory.last != point) {
       _navigationHistory.add(point);
     }
@@ -208,12 +297,19 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
         backgroundColor: SolarizedTheme.base03,
         body: Stack(
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: _buildScreens()[_currentIndex],
+            Stack(
+              children: List.generate(_screens.length, (i) {
+                return FadeTransition(
+                  opacity: _fadeAnimations[i],
+                  child: IgnorePointer(
+                    ignoring: _currentIndex != i,
+                    child: TickerMode(
+                      enabled: _currentIndex == i || _fadeAnimations[i].value > 0,
+                      child: _screens[i] ?? const SizedBox.shrink(),
+                    ),
+                  ),
+                );
+              }),
             ),
 
             // Top Left Branded Logo (Hidden on Profile)
@@ -287,19 +383,19 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
                             return AnimatedBuilder(
                               animation: _morphController,
                               builder: (context, _) {
+                                _preCacheSubNavRows(constraints);
                                 return Stack(
                                   alignment: Alignment.bottomCenter,
                                   clipBehavior: Clip.none,
                                   children: [
-                                    // 1. Floating Premium Living Label Chip (Positioned ABOVE the bar)
-                                    _buildActiveLabel(constraints),
+
 
                                     // 1.5. Swipe Hint (Appears ABOVE the label chip)
                                     if (_showSubNavHint && _currentIndex == _lastHintIndex)
                                       Positioned(
                                         left: 0,
                                         right: 0,
-                                        bottom: 115, // Above the 85px label chip
+                                        bottom: 95, // Above the bar
                                         child: Center(
                                           child: Text(
                                             "SWIPE THE NAV BAR TO THE LEFT",
@@ -360,19 +456,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
               ),
             ),
 
-            // Sub-nav hint chevron
-            if (_isSubNavMode)
-              Positioned(
-                bottom: 40,
-                right: 8,
-                child: Icon(
-                  Icons.keyboard_arrow_right_rounded,
-                  color: SolarizedTheme.base01.withOpacity(0.4),
-                  size: 18,
-                ).animate(onPlay: (c) => c.repeat(reverse: true))
-                 .fade(begin: 0.3, end: 0.8, duration: 1200.ms)
-                 .slideX(begin: 0, end: 0.3, duration: 1200.ms),
-              ),
+
           ],
         ),
       ),
@@ -381,260 +465,122 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
 
   // ── FLOATING LABEL BUILDER ─────────────────────────────────────────
 
-  Widget _buildActiveLabel(BoxConstraints constraints) {
-    if (!_showFloatingLabels) return const SizedBox.shrink();
 
-    final labels = ['HOME', 'COLLECTION', 'CLASH', 'PARTY', 'PROFILE'];
-    final subItems = _subNavConfigs[_currentIndex];
-    
-    String label;
-    int index;
-    int count;
-
-    if (_isSubNavMode && subItems != null) {
-      index = _subNavIndex;
-      count = subItems.length;
-      label = subItems[index].label.toUpperCase();
-    } else {
-      index = _currentIndex;
-      count = 5;
-      label = labels[index];
-    }
-
-    final double itemWidth = constraints.maxWidth / count;
-    final double bLeft = index * itemWidth + (itemWidth / 2);
-    final color = (_currentIndex == 2 && !_isSubNavMode) ? SolarizedTheme.magenta : SolarizedTheme.cyan;
-
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      left: bLeft - 50, // Center 100px width chip over the icon
-      width: 100,
-      bottom: 85, // Positioned above the 75px bar
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withOpacity(0.4), width: 1),
-            color: SolarizedTheme.base03.withOpacity(0.4),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Text(
-                label,
-                style: GoogleFonts.montserrat(
-                  color: color,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-          ),
-        )
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .moveY(begin: 0, end: -3, duration: 2500.ms, curve: Curves.easeInOutSine),
-      ),
-    );
-  }
 
   // ── NAV ROW BUILDERS ──────────────────────────────────────────────
 
   Widget _buildMainNavRow(BoxConstraints constraints) {
-    const int count = 5;
-    final double itemWidth = constraints.maxWidth / count;
-    
-    // Calculate circle position based on active index
-    final double bLeft = _currentIndex * itemWidth + (itemWidth / 2 - 25);
+    final labels = ['HOME', 'COLLECTION', 'CLASH', 'PARTY', 'PROFILE'];
+    final w = constraints.maxWidth;
+    final selectedW = w * 0.36;
+    final unselectedW = (w - selectedW) / 4;
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Floating Circle Highlighter
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          left: bLeft,
-          top: 12.5,
-          width: 50,
-          height: 50,
-          child: Container(
+    return Row(
+      children: List.generate(5, (i) {
+        final avatarUrl = _supabaseUser?.userMetadata?['avatar_url'];
+        Widget? iconOverride;
+        if (i == 4) {
+          iconOverride = AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.all(_currentIndex == i ? 2 : 0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: (_currentIndex == 2 ? SolarizedTheme.magenta : SolarizedTheme.cyan).withOpacity(0.35),
-                width: 1.5,
-              ),
-              color: (_currentIndex == 2 ? SolarizedTheme.magenta : SolarizedTheme.cyan).withOpacity(0.22),
-              boxShadow: [
-                BoxShadow(
-                  color: (_currentIndex == 2 ? SolarizedTheme.magenta : SolarizedTheme.cyan).withOpacity(0.1),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                )
-              ]
+              border: _currentIndex == i ? Border.all(color: SolarizedTheme.cyan, width: 2) : null,
             ),
+            child: CircleAvatar(
+              radius: 11,
+              backgroundColor: SolarizedTheme.base01,
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+              child: avatarUrl == null
+                  ? const Icon(Icons.person, size: 14, color: SolarizedTheme.base2)
+                  : null,
+            ),
+          );
+        }
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          width: _currentIndex == i ? selectedW : unselectedW,
+          height: 75,
+          child: MainNavItem(
+            index: i,
+            label: labels[i],
+            isSelected: _currentIndex == i,
+            iconOverride: iconOverride,
+            onTap: () {
+              if (_currentIndex != i) {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _oldIndex = _currentIndex;
+                  _currentIndex = i;
+                  _pushHistory(NavPoint(i));
+                  
+                  _ensureScreenLoaded(i);
+
+                  // Manage Cross-Fade Animations
+                  _fadeControllers[_oldIndex].reverse();
+                  _fadeControllers[_currentIndex].forward();
+                });
+              }
+
+              if (_hasSubNav(i)) {
+                if (_autoOpenSubNav) {
+                  _morphToSubNav();
+                } else {
+                  setState(() {
+                    _showSubNavHint = true;
+                    _lastHintIndex = i;
+                  });
+                  Future.delayed(const Duration(milliseconds: 2500), () {
+                    if (mounted) setState(() => _showSubNavHint = false);
+                  });
+                }
+              }
+            },
           ),
-        ),
-        Row(
-          children: List.generate(count, (i) {
-            return Expanded(
-              child: _buildMainNavItem(i),
-            );
-          }),
-        ),
-      ],
+        );
+      }),
     );
   }
 
-  Widget _buildSubNavRow(BoxConstraints constraints) {
-    final subItems = _subNavConfigs[_currentIndex];
+  Widget _buildSubNavRow(BoxConstraints constraints, {int? tabIndex}) {
+    final activeIndex = tabIndex ?? _currentIndex;
+    final subItems = _subNavConfigs[activeIndex];
     if (subItems == null) return const SizedBox.shrink();
+    final count = subItems.length;
+    final w = constraints.maxWidth;
+    final selectedW = w * 0.30;
+    final unselectedW = (w - selectedW) / (count - 1);
 
-    final int count = subItems.length;
-    final double itemWidth = constraints.maxWidth / count;
-    
-    // Calculate circle position based on active sub-nav index
-    final double bLeft = _subNavIndex * itemWidth + (itemWidth / 2 - 25);
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Floating Circle Highlighter
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          left: bLeft,
-          top: 12.5,
-          width: 50,
-          height: 50,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: SolarizedTheme.cyan.withOpacity(0.35),
-                width: 1.5,
-              ),
-              color: SolarizedTheme.cyan.withOpacity(0.22),
-              boxShadow: [
-                BoxShadow(
-                  color: SolarizedTheme.cyan.withOpacity(0.1),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                )
-              ]
+    return ClipRect(
+      child: Row(
+        children: List.generate(count, (i) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutCubic,
+            width: _subNavIndex == i ? selectedW : unselectedW,
+            height: 75,
+            child: SubNavItem(
+              index: i,
+              item: subItems[i],
+              isSelected: _subNavIndex == i,
+              onTap: () {
+                if (_subNavIndex != i) {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _oldSubNavIndex = _subNavIndex;
+                    _subNavIndex = i;
+                    _pushHistory(NavPoint(_currentIndex, subNavIndex: i, isSubNavMode: true));
+                  });
+                }
+              },
             ),
-          ),
-        ),
-        Row(
-          children: List.generate(count, (i) {
-            return Expanded(
-              child: _buildSubNavItem(i, subItems[i]),
-            );
-          }),
-        ),
-      ],
+          );
+        }),
+      ),
     );
   }
 
   // ── NAV ITEM BUILDERS ─────────────────────────────────────────────
-
-  Widget _buildMainNavItem(int index) {
-    final isSelected = _currentIndex == index;
-    final color = isSelected ? SolarizedTheme.cyan : SolarizedTheme.base01.withOpacity(0.6);
-
-    Widget iconWidget;
-    if (index == 1) {
-      iconWidget = BumpingHeadphonesIcon(isSelected: isSelected);
-    } else if (index == 2) {
-      iconWidget = BleedingClashIcon(isSelected: isSelected);
-    } else if (index == 3) {
-      iconWidget = SyncedHeadsetsIcon(isSelected: isSelected);
-    } else if (index == 4) {
-      final avatarUrl = _supabaseUser?.userMetadata?['avatar_url'];
-      iconWidget = AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(isSelected ? 2 : 0),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: isSelected ? Border.all(color: SolarizedTheme.cyan, width: 2) : null,
-        ),
-        child: CircleAvatar(
-          radius: isSelected ? 14 : 12,
-          backgroundColor: SolarizedTheme.base01,
-          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-          child: avatarUrl == null
-              ? const Icon(Icons.person, size: 16, color: SolarizedTheme.base2)
-              : null,
-        ),
-      );
-    } else {
-      iconWidget = Icon(Icons.home_rounded, color: color, size: isSelected ? 28 : 24);
-    }
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        if (_currentIndex != index) {
-          HapticFeedback.lightImpact();
-          setState(() {
-            _oldIndex = _currentIndex;
-            _currentIndex = index;
-            _pushHistory(_NavPoint(index));
-          });
-        }
-
-        // Handle sub-nav logic
-        if (_hasSubNav(index)) {
-          if (_autoOpenSubNav) {
-            _morphToSubNav();
-          } else {
-            // Show the swipe hint
-            setState(() {
-              _showSubNavHint = true;
-              _lastHintIndex = index;
-            });
-            // Auto hide hint after 2.5s
-            Future.delayed(const Duration(milliseconds: 2500), () {
-              if (mounted) setState(() => _showSubNavHint = false);
-            });
-          }
-        }
-      },
-      child: Center(
-        child: iconWidget,
-      ),
-    );
-  }
-
-  Widget _buildSubNavItem(int index, _SubNavItem item) {
-    final isSelected = _subNavIndex == index;
-    final color = isSelected ? SolarizedTheme.cyan : SolarizedTheme.base01.withOpacity(0.6);
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        if (_subNavIndex != index) {
-          HapticFeedback.lightImpact();
-          setState(() {
-            _oldSubNavIndex = _subNavIndex;
-            _subNavIndex = index;
-            _pushHistory(_NavPoint(_currentIndex, subNavIndex: index, isSubNavMode: true));
-          });
-        }
-      },
-      child: Center(
-        child: Icon(item.icon, color: color, size: isSelected ? 24 : 18),
-      ),
-    );
-  }
-}
-
-class _SubNavItem {
-  final IconData icon;
-  final String label;
-  const _SubNavItem({required this.icon, required this.label});
 }

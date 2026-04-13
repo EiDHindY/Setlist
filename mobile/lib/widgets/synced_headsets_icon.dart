@@ -15,10 +15,11 @@ class SyncedHeadsetsIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size + 20,
-      height: size + 20,
+      width: size,
+      height: size,
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           // The Shared Equalizer (Middle)
           if (isSelected)
@@ -37,8 +38,8 @@ class SyncedHeadsetsIcon extends StatelessWidget {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutBack,
-            left: isSelected ? 4 : 8,
-            top: isSelected ? 4 : 8,
+            left: isSelected ? -4 : -2,
+            top: isSelected ? -4 : -2,
             child: Opacity(
               opacity: isSelected ? 1.0 : 0.4,
               child: Icon(
@@ -53,8 +54,8 @@ class SyncedHeadsetsIcon extends StatelessWidget {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutBack,
-            right: isSelected ? 4 : 8,
-            bottom: isSelected ? 4 : 8,
+            right: isSelected ? -4 : -2,
+            bottom: isSelected ? -4 : -2,
             child: Icon(
               Icons.headphones_rounded,
               size: size,

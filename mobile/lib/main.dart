@@ -6,6 +6,7 @@ import 'screens/login_screen.dart';
 import 'layouts/main_layout.dart';
 import 'services/auth_service.dart';
 import 'widgets/branded_loader.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,11 @@ Future<void> main() async {
     url: 'https://ajxgthpcjbqhygxjvtcf.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqeGd0aHBjamJxaHlneGp2dGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk5MjQsImV4cCI6MjA5MDgwNTkyNH0.L90HmJXIw7qhordu6FEUc3nGcYgoruFlR3F6kVhFkwQ',
   );
+
+  // Pre-warm Google Fonts to prevent first-render jank in tabs
+  // We don't need to await these, just triggering the load is enough
+  GoogleFonts.cinzel();
+  GoogleFonts.montserrat();
 
   runApp(const MyApp());
 }
