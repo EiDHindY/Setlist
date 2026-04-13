@@ -6,8 +6,14 @@ import '../theme/solarized_theme.dart';
 class AnimatedSolarizedLogo extends StatefulWidget {
   final double width;
   final double height;
+  final VoidCallback? onComplete;
   
-  const AnimatedSolarizedLogo({super.key, this.width = 320, this.height = 350});
+  const AnimatedSolarizedLogo({
+    super.key, 
+    this.width = 320, 
+    this.height = 350,
+    this.onComplete,
+  });
 
   @override
   State<AnimatedSolarizedLogo> createState() => _AnimatedSolarizedLogoState();
@@ -38,6 +44,12 @@ class _AnimatedSolarizedLogoState extends State<AnimatedSolarizedLogo> with Sing
       parent: _controller,
       curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
     );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        widget.onComplete?.call();
+      }
+    });
 
     // Micro delay to ensure layout passes complete before triggering
     Future.delayed(const Duration(milliseconds: 50), () {

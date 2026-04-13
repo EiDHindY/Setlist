@@ -6,6 +6,7 @@ import 'screens/login_screen.dart';
 import 'layouts/main_layout.dart';
 import 'services/auth_service.dart';
 import 'widgets/branded_loader.dart';
+import 'screens/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 Future<void> main() async {
@@ -45,7 +46,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Setlist',
       theme: SolarizedTheme.darkTheme,
-      home: const AuthWrapper(),
+      home: const SplashScreen(),
     );
   }
 }

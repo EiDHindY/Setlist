@@ -1,58 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/solarized_theme.dart';
-import '../models/song_model.dart';
-import '../widgets/song_item.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  final int subNavIndex;
+  const LibraryScreen({super.key, this.subNavIndex = 0});
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late TabController _tabController;
+class _LibraryScreenState extends State<LibraryScreen> with AutomaticKeepAliveClientMixin {
   
   @override
   bool get wantKeepAlive => true;
-  
-  final List<Song> _mockSongs = [
-    Song(
-      id: "1",
-      title: "Solarized Dreams",
-      artist: "D0D0",
-      albumArt: "https://via.placeholder.com/150/002b36/fdf6e3?text=S1",
-      duration: const Duration(minutes: 3, seconds: 45),
-    ),
-    Song(
-      id: "2",
-      title: "Cyberpunk Echoes",
-      artist: "Aliaa M.",
-      albumArt: "https://via.placeholder.com/150/073642/fdf6e3?text=CE",
-      duration: const Duration(minutes: 4, seconds: 12),
-    ),
-    Song(
-      id: "3",
-      title: "Ghost in the Shell",
-      artist: "Kenji Kawai",
-      albumArt: "https://via.placeholder.com/150/586e75/fdf6e3?text=GIS",
-      duration: const Duration(minutes: 2, seconds: 58),
-    ),
-    Song(
-      id: "4",
-      title: "Midnight City",
-      artist: "M83",
-      albumArt: "https://via.placeholder.com/150/859900/fdf6e3?text=MC",
-      duration: const Duration(minutes: 4, seconds: 03),
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,76 +48,140 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           
           const SizedBox(height: 12),
 
-          // Custom Tab Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              labelColor: SolarizedTheme.cyan,
-              unselectedLabelColor: SolarizedTheme.base01,
-              indicatorColor: SolarizedTheme.cyan,
-              indicatorSize: TabBarIndicatorSize.label,
-              dividerColor: Colors.transparent,
-              labelPadding: const EdgeInsets.only(right: 24),
-              tabs: [
-                Tab(child: Text("SONGS", style: GoogleFonts.cinzel(fontSize: 16, fontWeight: FontWeight.bold))),
-                Tab(child: Text("PLAYLISTS", style: GoogleFonts.cinzel(fontSize: 16, fontWeight: FontWeight.bold))),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Tab Content
+          // Tab Content (Now based on subNavIndex)
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Songs Tab
-                _buildSongsList(),
-                
-                // Playlists Tab
-                _buildPlaylistsContent(),
-              ],
-            ),
+            child: _getContentForIndex(widget.subNavIndex),
           ),
         ],
       ),
     );
   }
 
+  Widget _getContentForIndex(int index) {
+    switch (index) {
+      case 0: // Songs
+        return _buildSongsList();
+      case 1: // Setlists
+        return _buildPlaylistsContent("No setlists created yet.");
+      case 2: // Albums
+        return _buildPlaceholderContent(Icons.album_rounded, "Albums feature coming soon.");
+      case 3: // Artists
+        return _buildPlaceholderContent(Icons.person_rounded, "Artists feature coming soon.");
+      case 4: // Producers
+        return _buildPlaceholderContent(Icons.settings_input_component_rounded, "Producers feature coming soon.");
+      case 5: // Mixers
+        return _buildPlaceholderContent(Icons.tune_rounded, "Mixers feature coming soon.");
+      default:
+        return _buildSongsList();
+    }
+  }
+
   Widget _buildSongsList() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      itemCount: _mockSongs.length,
-      itemBuilder: (context, index) {
-        return SongItem(
-          song: _mockSongs[index],
-          onTap: () {
-            // Handle Play
-          },
-        );
+    return _buildEmptyState(
+      icon: Icons.music_note_rounded,
+      title: "Your Collection is Silent",
+      message: "Ready to start your next session?\nAdd some tracks to get the rhythm going.",
+      buttonLabel: "FIND SONGS",
+      onPressed: () {
+        // TODO: Navigate to Search or Add Song screen
       },
     );
   }
 
-  Widget _buildPlaylistsContent() {
+  Widget _buildPlaylistsContent(String message) {
+    return _buildEmptyState(
+      icon: Icons.playlist_add_rounded,
+      title: "No Setlists Yet",
+      message: "Organize your tracks into powerful setlists\nfor your next live performance.",
+      buttonLabel: "CREATE SETLIST",
+      onPressed: () {
+        // TODO: Open Create Setlist dialog
+      },
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String message,
+    required String buttonLabel,
+    required VoidCallback onPressed,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: SolarizedTheme.base02.withOpacity(0.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: SolarizedTheme.base01.withOpacity(0.2)),
+              ),
+              child: Icon(
+                icon,
+                size: 64,
+                color: SolarizedTheme.base01.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              title,
+              style: GoogleFonts.cinzel(
+                color: SolarizedTheme.base3,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: GoogleFonts.montserrat(
+                color: SolarizedTheme.base1,
+                fontSize: 14,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SolarizedTheme.cyan.withOpacity(0.1),
+                foregroundColor: SolarizedTheme.cyan,
+                side: const BorderSide(color: SolarizedTheme.cyan, width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
+              ),
+              child: Text(
+                buttonLabel,
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderContent(IconData icon, String message) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.playlist_add_rounded, size: 64, color: SolarizedTheme.base01.withOpacity(0.4)),
+          Icon(icon, size: 64, color: SolarizedTheme.base01.withOpacity(0.4)),
           const SizedBox(height: 16),
-          const Text(
-            "No playlists created yet.",
-            style: TextStyle(color: SolarizedTheme.base01),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(backgroundColor: SolarizedTheme.base02),
-            child: const Text("CREATE NEW PLAYLIST", style: TextStyle(color: SolarizedTheme.cyan)),
+          Text(
+            message,
+            style: const TextStyle(color: SolarizedTheme.base01),
           ),
         ],
       ),

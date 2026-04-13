@@ -87,7 +87,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
-          _screens[1] = const LibraryScreen();
+          _screens[1] = LibraryScreen(subNavIndex: _subNavIndex);
         });
       }
     });
@@ -108,7 +108,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   Widget _getScreenByIndex(int index) {
     switch (index) {
       case 0: return const HomeScreen();
-      case 1: return const LibraryScreen();
+      case 1: return LibraryScreen(subNavIndex: _subNavIndex);
       case 2: return const ClashScreen();
       case 3: return const PartyScreen();
       case 4: return _buildProfileScreen();
@@ -344,11 +344,13 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2.0,
                         ),
-                      ).animate()
-                       .fade(duration: 400.ms)
+                      ).animate(delay: 1000.ms)
+                       .fade(duration: 500.ms)
                        .slideX(begin: 0.2, curve: Curves.easeOutCubic),
                     ],
-                  ).animate().fade(duration: 300.ms).slideX(begin: -0.2),
+                  ).animate(delay: 1000.ms)
+                   .fade(duration: 600.ms)
+                   .slideY(begin: -1.0, curve: Curves.easeOutCubic, duration: 700.ms),
                 ),
               ),
 
@@ -571,6 +573,12 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
                   setState(() {
                     _oldSubNavIndex = _subNavIndex;
                     _subNavIndex = i;
+                    
+                    // Force refresh Collection screen with new index
+                    if (_currentIndex == 1) {
+                      _screens[1] = LibraryScreen(subNavIndex: i);
+                    }
+                    
                     _pushHistory(NavPoint(_currentIndex, subNavIndex: i, isSubNavMode: true));
                   });
                 }
