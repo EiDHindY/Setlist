@@ -41,6 +41,16 @@ dependencies:
   http: ^1.6.0
   google_fonts: ^8.0.2
 
+  # ── YouTube & Audio ──────────────────────────────────────────
+  youtube_player_iframe: ^5.1.0      # Official embedded YT player (both builds)
+  youtube_explode_dart: ^2.2.0       # Unofficial search + stream extraction (VIP)
+  just_audio: ^0.9.36                # Audio playback engine (VIP background play)
+  audio_service: ^0.18.12            # Lock-screen controls & background service (VIP)
+  shared_preferences: ^2.5.5
+  share_handler: ^0.0.25
+  lottie: ^3.3.1
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -54,18 +64,30 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
   image_path: "icon_master.png"
   image_path_android: "icon_rounded.png"
   image_path_ios: "icon_ios.png"
-  adaptive_icon_background: "#002b36"
-  adaptive_icon_foreground: "icon_foreground.png"
+  # adaptive_icon_background: "#002b36"
+  # adaptive_icon_foreground: "icon_foreground.png"
   web:
     generate: true
     image_path: "icon_master.png"
     background_color: "#002b36"
     theme_color: "#002b36"
+
+  flavors:
+    playstore:
+      image_path: "standard_icon_master.png"
+      image_path_android: "standard_icon_master.png"
+      adaptive_icon_background: "#002b36"
+      adaptive_icon_foreground: "standard_foreground_final.png"
+    vip:
+      image_path: "vip_icon_master.png"
+      image_path_android: "vip_icon_master.png"
+      adaptive_icon_background: "#002b36"
+      adaptive_icon_foreground: "vip_foreground_final.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -78,9 +100,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/animations/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -7,12 +7,16 @@ class AnimatedSolarizedLogo extends StatefulWidget {
   final double width;
   final double height;
   final VoidCallback? onComplete;
+  final bool isLooping;
+  final bool startAtFull;
   
   const AnimatedSolarizedLogo({
     super.key, 
     this.width = 320, 
     this.height = 350,
     this.onComplete,
+    this.isLooping = false,
+    this.startAtFull = false,
   });
 
   @override
@@ -47,15 +51,31 @@ class _AnimatedSolarizedLogoState extends State<AnimatedSolarizedLogo> with Sing
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        widget.onComplete?.call();
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _drawComplete = true;
+              });
+              widget.onComplete?.call();
+            }
+          });
+        }
       }
     });
 
-    // Micro delay to ensure layout passes complete before triggering
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (mounted) _controller.forward();
-    });
+    if (widget.startAtFull) {
+      _controller.value = 1.0;
+      // Trigger the completion logic via the listener
+    } else {
+      // Micro delay to ensure layout passes complete before triggering
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) _controller.forward();
+      });
+    }
   }
+
+  bool _drawComplete = false;
 
   @override
   void dispose() {
@@ -110,7 +130,7 @@ class _AnimatedSolarizedLogoState extends State<AnimatedSolarizedLogo> with Sing
                             color: SolarizedTheme.base3,
                             boxShadow: [BoxShadow(color: SolarizedTheme.cyan.withOpacity(0.4), blurRadius: 6)],
                           ),
-                        ).animate().fade(delay: 3500.ms, duration: 200.ms).scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1), delay: 3500.ms, curve: Curves.elasticOut),
+                        ).animate().fade(delay: widget.startAtFull ? 0.ms : 3500.ms, duration: 200.ms).scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1), delay: widget.startAtFull ? 0.ms : 3500.ms, curve: Curves.elasticOut),
                       ),
                     ),
                     
@@ -126,7 +146,7 @@ class _AnimatedSolarizedLogoState extends State<AnimatedSolarizedLogo> with Sing
                             borderRadius: BorderRadius.circular(10),
                             color: SolarizedTheme.cyan.withOpacity(0.6),
                           ),
-                        ).animate().fade(delay: 3800.ms, duration: 200.ms).scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1), delay: 3800.ms, curve: Curves.elasticOut),
+                        ).animate().fade(delay: widget.startAtFull ? 0.ms : 3800.ms, duration: 200.ms).scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1), delay: widget.startAtFull ? 0.ms : 3800.ms, curve: Curves.elasticOut),
                       ),
                     ),
                   ],
@@ -143,10 +163,21 @@ class _AnimatedSolarizedLogoState extends State<AnimatedSolarizedLogo> with Sing
                   color: SolarizedTheme.base3,
                   shadows: [const Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 3))],
                 ),
-              ).animate().fade(delay: 2000.ms, duration: 1500.ms).slideY(begin: 0.2, end: 0, delay: 2000.ms),
+              ).animate().fade(delay: widget.startAtFull ? 0.ms : 2000.ms, duration: 1500.ms).slideY(begin: 0.2, end: 0, delay: widget.startAtFull ? 0.ms : 2000.ms),
               
 
             ],
+          ).animate(
+            target: widget.isLooping ? 1 : 0,
+            onPlay: (controller) => controller.repeat(reverse: true),
+          ).scale(
+            begin: const Offset(1.0, 1.0),
+            end: const Offset(1.03, 1.03),
+            duration: 1200.ms,
+            curve: Curves.easeInOut,
+          ).shimmer(
+            duration: 3000.ms,
+            color: SolarizedTheme.base3.withOpacity(0.15),
           ),
         ],
       ),

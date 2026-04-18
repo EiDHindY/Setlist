@@ -58,7 +58,7 @@ class MainNavItem extends StatelessWidget {
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
-            horizontal: isSelected ? 10 : 0,
+            horizontal: isSelected ? 8 : 0,
             vertical: isSelected ? 8 : 0,
           ),
           decoration: BoxDecoration(
@@ -96,7 +96,7 @@ class MainNavItem extends StatelessWidget {
                         color: themeColor,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
+                        letterSpacing: 0.5,
                       ),
                     ).animate().fadeIn(duration: 250.ms),
                   ),

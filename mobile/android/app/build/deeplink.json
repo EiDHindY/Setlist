@@ -1,0 +1,1 @@
+{"applicationId":"com.setlist.setlist","deeplinkingFlagEnabled":false,"deeplinks":[{"scheme":"io.supabase.setlist","host":"login-callback","path":".*","intentFilterCheck":{"hasAutoVerify":false,"hasActionView":true,"hasDefaultCategory":true,"hasBrowsableCategory":true}}]}

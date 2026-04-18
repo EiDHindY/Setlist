@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.setlist.setlist.app-mergeVipDebugResources-61:/values-ldltr-v21/values-ldltr-v21.xml",
+            "map": [
+                {
+                    "source": "/home/dod/.gradle/caches/8.14/transforms/21b067fbac6802cd9e66d0b3edf4f214/transformed/appcompat-1.2.0/res/values-ldltr-v21/values-ldltr-v21.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "112",
+                        "endOffsets": "163"
+                    }
+                }
+            ]
+        }
+    ]
+}

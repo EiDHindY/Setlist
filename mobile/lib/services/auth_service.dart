@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   // Your Fedora Machine's Local IP
-  static const String _backendUrl = 'http://192.168.8.109:5169/api/user/sync';
+  static const String _backendUrl = 'http://10.255.84.8:5169/api/user/sync';
 
   /// Syncs the current Supabase user with the C# Backend
   /// This takes the Supabase Identity and registers it in our central database.
@@ -26,7 +26,7 @@ class AuthService {
         Uri.parse(_backendUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(userData),
-      );
+      ).timeout(const Duration(seconds: 3)); // 🛡️ Safety Timeout
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('✅ Backend Sync Successful: User Identity Locked! 🏯');

@@ -6,6 +6,7 @@ import '../theme/solarized_theme.dart';
 import '../widgets/animated_logo.dart';
 import '../widgets/exit_dialog.dart';
 import '../widgets/branded_loader.dart';
+import '../widgets/vip_badge.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -62,6 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             // Logo / Branding
             const AnimatedSolarizedLogo(width: 320, height: 350),
+            
+            const SizedBox(height: 8),
+            const VipBadge(size: 14).animate().fade(delay: 500.ms).slideY(begin: 0.5, curve: Curves.easeOut),
             
             const SizedBox(height: 40),
             

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/solarized_theme.dart';
 import '../widgets/animated_logo.dart';
-import '../main.dart';
+import '../config/app_config.dart';
+import '../widgets/auth_wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,6 +19,9 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: AnimatedSolarizedLogo(
           onComplete: () {
+            // Mark as animated so future wrappers skip the drawing
+            AppConfig.hasLogoAnimated = true;
+            
             // Smooth transition to the AuthWrapper
             Navigator.of(context).pushReplacement(
               PageRouteBuilder(

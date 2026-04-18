@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,9 +8,15 @@ import 'layouts/main_layout.dart';
 import 'services/auth_service.dart';
 import 'widgets/branded_loader.dart';
 import 'screens/splash_screen.dart';
+import 'screens/search_screen.dart';
+import 'widgets/auth_splash_wrapper.dart';
+import 'services/share_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-Future<void> main() async {
+/// ── SHARED APP MAIN ────────────────────────────────────────────────
+/// This is the shared entry point called by both main_playstore.dart
+/// and main_vip.dart AFTER they set AppConfig.flavor.
+Future<void> appMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Enter fullscreen immersive mode (hides status bar and navigation bar)
@@ -29,10 +36,8 @@ Future<void> main() async {
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqeGd0aHBjamJxaHlneGp2dGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk5MjQsImV4cCI6MjA5MDgwNTkyNH0.L90HmJXIw7qhordu6FEUc3nGcYgoruFlR3F6kVhFkwQ',
   );
 
-  // Pre-warm Google Fonts to prevent first-render jank in tabs
-  // We don't need to await these, just triggering the load is enough
-  GoogleFonts.cinzel();
-  GoogleFonts.montserrat();
+  // Initialize Sharing Service
+  ShareService().init();
 
   runApp(const MyApp());
 }
@@ -51,12 +56,40 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
   @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  String? _lastSessionId;
+  StreamSubscription? _shareSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for incoming share intents
+    _shareSubscription = ShareService().linkStream.listen((link) {
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => SearchScreen(initialQuery: link),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _shareSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Listen to the authentication state stream (Reactive!)
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
@@ -69,15 +102,22 @@ class AuthWrapper extends StatelessWidget {
 
         final session = snapshot.data?.session;
         
-        // If we have a session, trigger backend sync and go to the Smart Home Page
         if (session != null) {
-          // Trigger the "Hello!" to the C# Backend (Async)
-          AuthService.syncUserWithBackend(session);
+          final isNewSession = _lastSessionId != session.user.id;
+          _lastSessionId = session.user.id;
+
+          // If it's a "fresh" login in this session, show the transition splash
+          if (isNewSession) {
+             return AuthSplashWrapper(
+               onReady: () => AuthService.syncUserWithBackend(session),
+               child: const MainLayout(),
+             );
+          }
           
           return const MainLayout();
         } 
         
-        // No session? Stay on the Solarized Login screen
+        _lastSessionId = null;
         return const LoginScreen();
       },
     );

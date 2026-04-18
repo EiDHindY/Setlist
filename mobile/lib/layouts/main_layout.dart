@@ -16,6 +16,7 @@ import '../widgets/mixer_icon.dart';
 import '../widgets/song_icon.dart';
 import '../widgets/album_icon.dart';
 import '../widgets/setlist_icon.dart';
+import '../widgets/vip_badge.dart';
 import '../models/nav_models.dart';
 import '../widgets/nav_bar/main_nav_item.dart';
 import '../widgets/nav_bar/sub_nav_item.dart';
@@ -83,7 +84,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
       curve: Curves.easeInOut,
     )).toList();
 
-    // Lazy load Collection tab after the first frame to keep startup instant
+    // Lazy load Collections tab after the first frame to keep startup instant
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -320,10 +321,10 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: SolarizedTheme.base02.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(12),
+                          shape: BoxShape.circle,
                           border: Border.all(color: SolarizedTheme.base01.withOpacity(0.5), width: 1.5),
                           boxShadow: [
                             BoxShadow(
@@ -347,6 +348,8 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
                       ).animate(delay: 1000.ms)
                        .fade(duration: 500.ms)
                        .slideX(begin: 0.2, curve: Curves.easeOutCubic),
+                      const SizedBox(width: 8),
+                      const VipBadge(size: 10),
                     ],
                   ).animate(delay: 1000.ms)
                    .fade(duration: 600.ms)
@@ -472,9 +475,9 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
   // ── NAV ROW BUILDERS ──────────────────────────────────────────────
 
   Widget _buildMainNavRow(BoxConstraints constraints) {
-    final labels = ['HOME', 'COLLECTION', 'CLASH', 'PARTY', 'PROFILE'];
+    final labels = ['HOME', 'COLLECTIONS', 'CLASH', 'PARTY', 'PROFILE'];
     final w = constraints.maxWidth;
-    final selectedW = w * 0.36;
+    final selectedW = w * 0.40;
     final unselectedW = (w - selectedW) / 4;
 
     return Row(
@@ -574,7 +577,7 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
                     _oldSubNavIndex = _subNavIndex;
                     _subNavIndex = i;
                     
-                    // Force refresh Collection screen with new index
+                    // Force refresh Collections screen with new index
                     if (_currentIndex == 1) {
                       _screens[1] = LibraryScreen(subNavIndex: i);
                     }
