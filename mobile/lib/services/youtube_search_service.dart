@@ -14,8 +14,9 @@ class SearchSuggestion {
   final String? imageUrl;
   final String? songTitle;
   final String? appleTrackId;
+  final bool isOfficial;
 
-  SearchSuggestion(this.text, this.type, {this.subtitle, this.imageUrl, this.songTitle, this.appleTrackId});
+  SearchSuggestion(this.text, this.type, {this.subtitle, this.imageUrl, this.songTitle, this.appleTrackId, this.isOfficial = false});
 
   @override
   bool operator ==(Object other) =>
@@ -35,6 +36,8 @@ class YouTubeSearchResult {
   final String thumbnailUrl;
   final Duration? duration;
   final int viewCount;
+  final bool isOfficial;
+  final String? description;
 
   YouTubeSearchResult({
     required this.videoId,
@@ -44,6 +47,8 @@ class YouTubeSearchResult {
     required this.thumbnailUrl,
     this.duration,
     this.viewCount = 0,
+    this.isOfficial = false,
+    this.description,
   });
 }
 
@@ -118,6 +123,7 @@ mixin MusicDataMixin {
             imageUrl: artworkUrl,
             songTitle: item['trackName'] as String?,
             appleTrackId: item['trackId']?.toString(),
+            isOfficial: true, // iTunes songs are essentially always 'Official' compared to YT noise
           ));
         }
       }
@@ -167,6 +173,7 @@ mixin MusicDataMixin {
             imageUrl: artworkUrl,
             songTitle: item['title']?.toString(),
             appleTrackId: 'dz_${item['id']}', // Deezer track ID
+            isOfficial: true, // Deezer songs are essentially always 'Official'
           ));
         }
       }
@@ -281,17 +288,41 @@ mixin MusicDataMixin {
   }
 
   String _normalize(String s) {
-    return s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
+    // Simpler, safer normalization to avoid stripping everything
+    return s.toLowerCase()
+            .replaceAll(RegExp(r'[^a-z0-9\s]'), '') // Only keep letters, numbers, and spaces
+            .replaceAll(RegExp(r'\s+'), ' ')       // Normalize spaces
+            .trim();
+  }
+
+  double _getTokenOverlap(String metadataTitle, String resultTitle) {
+    final mTokens = metadataTitle.toLowerCase().split(RegExp(r'\s+')).where((t) => t.length > 1).toSet();
+    final rTokens = resultTitle.toLowerCase().split(RegExp(r'\s+')).where((t) => t.length > 1).toSet();
+    if (mTokens.isEmpty) return 0;
+    final intersection = mTokens.intersection(rTokens);
+    return intersection.length / mTokens.length;
   }
 
   bool _isOfficialChannel(String channelName, String? artistName) {
-    if (artistName == null) return false;
     final cName = channelName.toLowerCase();
+    if (artistName == null) return cName.contains('topic');
     final aName = artistName.toLowerCase();
-    return cName == aName || 
-           cName == "$aName - topic" || 
-           cName.contains("$aName official") ||
-           cName.contains("$aName vevo");
+    
+    // Direct matches or Topic channels that contain the artist name
+    if ((cName.contains(aName) && cName.contains('topic')) || 
+        cName == aName || 
+        cName.contains('$aName official') ||
+        cName.contains('$aName vevo')) {
+      return true;
+    }
+
+    // Common artist channel suffixes (e.g. starsetonline, band, music)
+    final commonSuffixes = ['online', 'music', 'tv', 'channel', 'band'];
+    for (final suffix in commonSuffixes) {
+      if (cName == '$aName$suffix' || cName == '$aName $suffix') return true;
+    }
+
+    return false;
   }
 }
 
@@ -301,76 +332,112 @@ class ExplodeSearchService with MusicDataMixin implements YouTubeSearchService {
   final YoutubeExplode _yt = YoutubeExplode();
   VideoSearchList? _currentSearchList;
 
+  Future<List<Video>> _fetchDeep(String query, int pages) async {
+    final List<Video> combinedResults = [];
+    try {
+      VideoSearchList? currentList = await _yt.search.search(query);
+      int pageCount = 0;
+      while (currentList != null && pageCount < pages) {
+        combinedResults.addAll(currentList);
+        currentList = await currentList.nextPage();
+        pageCount++;
+      }
+    } catch (_) {
+      // Fallback if search fails
+    }
+    return combinedResults;
+  }
+
   @override
   Future<List<YouTubeSearchResult>> search(String query, {int maxResults = 15, String? songTitle, String? artistName}) async {
-    // If metadata is provided, follow the strict two-query pattern requested:
-    // 1. Artist + Song
-    // 2. Song only
-    final List<Future<VideoSearchList>> searchTasks = [];
-    if (songTitle != null && artistName != null) {
-      searchTasks.add(_yt.search.search('$artistName $songTitle'));
-      searchTasks.add(_yt.search.search(songTitle));
+    final searchTasks = <Future<List<Video>>>[];
+    
+    // Determine if the user manually typed something different than the default automated query
+    final defaultQuery = (songTitle != null && artistName != null) ? "$artistName $songTitle" : "";
+    final isCustomQuery = query.isNotEmpty && query.trim().toLowerCase() != defaultQuery.toLowerCase();
+
+    if (isCustomQuery) {
+      // Respect manual user input 100%
+      searchTasks.add(_fetchDeep(query, 2));
+    } else if (songTitle != null && artistName != null) {
+      // Focus on the Topic version and a general search
+      searchTasks.add(_fetchDeep('$artistName $songTitle Topic', 2));
+      searchTasks.add(_fetchDeep('$artistName $songTitle', 1));
     } else {
-      searchTasks.add(_yt.search.search(query));
-      searchTasks.add(_yt.search.search('$query official audio').catchError((_) => null));
+      searchTasks.add(_fetchDeep(query, 1));
     }
 
     final searches = await Future.wait(searchTasks);
-    _currentSearchList = searches[0];
-    final secondarySearchList = searches.length > 1 ? searches[1] : null;
+    final resultMap = <String, YouTubeSearchResult>{};
 
-    if (_currentSearchList == null) return [];
-
-    final Map<String, YouTubeSearchResult> resultMap = {};
-
-    YouTubeSearchResult toResult(Video video) => YouTubeSearchResult(
-      videoId: video.id.value,
-      title: video.title,
-      channelName: video.author,
-      channelId: video.channelId.value,
-      thumbnailUrl: video.thumbnails.highResUrl,
-      duration: video.duration,
-      viewCount: video.engagement.viewCount,
-    );
-
-    // Merge results
-    for (final video in _currentSearchList!.take(20)) {
-      resultMap[video.id.value] = toResult(video);
+    YouTubeSearchResult toResult(Video video) {
+      return YouTubeSearchResult(
+        videoId: video.id.value,
+        title: video.title,
+        channelName: video.author,
+        channelId: video.channelId.value,
+        thumbnailUrl: video.thumbnails.highResUrl,
+        duration: video.duration,
+        viewCount: video.engagement.viewCount,
+        isOfficial: _isOfficialChannel(video.author, artistName),
+      );
     }
-    if (secondarySearchList != null) {
-      for (final video in secondarySearchList.take(20)) {
+
+    for (final list in searches) {
+      for (final video in list) {
         resultMap.putIfAbsent(video.id.value, () => toResult(video));
       }
     }
 
     List<YouTubeSearchResult> allResults = resultMap.values.toList();
 
-    // STRICT RELEVANCE FILTER (Only if songTitle is provided)
-    if (songTitle != null) {
-      final normTitle = _normalize(songTitle);
-      allResults = allResults.where((r) {
-        final normResultTitle = _normalize(r.title);
-        return normResultTitle.contains(normTitle);
+    // PRECISION FILTERING: Only apply if we used the automated query
+    if (songTitle != null && !isCustomQuery) {
+      final normSong = _normalize(songTitle);
+      final songTokens = normSong.split(' ').where((t) => t.length > 2).toList();
+      
+      final filtered = allResults.where((r) {
+        final normResult = _normalize(r.title);
+        
+        // 1. Direct contains check
+        if (normResult.contains(normSong)) return true;
+        
+        // 2. Keyword check: At least one major word from the song title must be present
+        if (songTokens.isNotEmpty) {
+           return songTokens.any((t) => normResult.contains(t));
+        }
+        
+        return normResult.contains(normSong);
       }).toList();
+
+      // SAFETY NET: If we found the right song, keep it. If NOT, return an empty list 
+      // rather than showing "Grace" when they searched for "Hallelujah".
+      if (filtered.isNotEmpty) {
+        allResults = filtered;
+      } else {
+        allResults = []; // Force them to use manual search if YouTube fails us
+      }
     }
 
-    // TIERED SORTING: 
-    // Tier 1: Official Artist Channel (sorted by views)
-    // Tier 2: Everything else (sorted by views)
+    // THREE-TIER SORT: Topic > Official Video > Views
     allResults.sort((a, b) {
-      final aIsOfficial = _isOfficialChannel(a.channelName, artistName);
-      final bIsOfficial = _isOfficialChannel(b.channelName, artistName);
+      final aIsTopic = a.channelName.toLowerCase().contains('topic');
+      final bIsTopic = b.channelName.toLowerCase().contains('topic');
 
-      if (aIsOfficial != bIsOfficial) {
-        return aIsOfficial ? -1 : 1;
+      // Tier 1: Topic channels get absolute highest priority (if they are official)
+      if (aIsTopic != bIsTopic) {
+         if (aIsTopic && a.isOfficial) return -1;
+         if (bIsTopic && b.isOfficial) return 1;
       }
 
-      // Tie-breaker: View Count
+      // Tier 2: Other Official channels (Vevo, Main Artist Channel)
+      if (a.isOfficial != b.isOfficial) return a.isOfficial ? -1 : 1;
+      
+      // Tier 3: Fallback to views
       return b.viewCount.compareTo(a.viewCount);
     });
 
-    // CAPPED AT 10 as requested
-    return allResults.take(10).toList();
+    return allResults.take(15).toList();
   }
 
   @override
@@ -406,6 +473,7 @@ class ExplodeSearchService with MusicDataMixin implements YouTubeSearchService {
         thumbnailUrl: video.thumbnails.highResUrl,
         duration: video.duration,
         viewCount: video.engagement.viewCount,
+        description: video.description,
       );
     } catch (e) {
       return null;

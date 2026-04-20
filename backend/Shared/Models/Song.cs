@@ -16,8 +16,7 @@ public class Song
 
     public string? Album { get; set; }
 
-    [Required]
-    public string YouTubeId { get; set; } = string.Empty; // For direct streaming
+    public string? AppleTrackId { get; set; } // iTunes trackId for global identification
 
     public string? ISRC { get; set; } // International Standard Recording Code
 
@@ -51,4 +50,7 @@ public class Song
 
     // Navigation Property for Modular Credits
     public virtual ICollection<Credit> Credits { get; set; } = new List<Credit>();
+    
+    // Navigation Property for YouTube Versions
+    public virtual ICollection<SongVersion> Versions { get; set; } = new List<SongVersion>();
 }

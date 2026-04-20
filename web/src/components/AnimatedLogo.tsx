@@ -3,7 +3,12 @@ import { Cinzel } from 'next/font/google';
 
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '500', '600'] });
 
-export default function AnimatedLogo() {
+interface AnimatedLogoProps {
+  isStatic?: boolean;
+  isLoading?: boolean;
+}
+
+export default function AnimatedLogo({ isStatic = false, isLoading = false }: AnimatedLogoProps) {
   return (
     <div className="logo-container-wrapper relative w-[350px] h-[450px] mx-auto flex justify-center items-center">
       <style>{`
@@ -13,9 +18,7 @@ export default function AnimatedLogo() {
           stroke: #586e75;
           stroke-width: 0.5;
           opacity: 0.6;
-          stroke-dasharray: 400;
-          stroke-dashoffset: 400;
-          animation: drawStaff 3s ease-in-out forwards;
+          ${isStatic ? '' : 'stroke-dasharray: 400; stroke-dashoffset: 400; animation: drawStaff 3s ease-in-out forwards;'}
         }
 
         .geometric-s {
@@ -24,10 +27,8 @@ export default function AnimatedLogo() {
           stroke-width: 2;
           stroke-linecap: round;
           stroke-linejoin: round;
-          stroke-dasharray: 220;
-          stroke-dashoffset: 220;
-          animation: drawPath 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1s;
           filter: drop-shadow(0 4px 15px rgba(253, 246, 227, 0.4));
+          ${isStatic ? '' : 'stroke-dasharray: 220; stroke-dashoffset: 220; animation: drawPath 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1s;'}
         }
 
         .geometric-s-ghost {
@@ -36,27 +37,21 @@ export default function AnimatedLogo() {
           stroke-width: 1;
           stroke-linecap: round;
           stroke-linejoin: round;
-          stroke-dasharray: 220;
-          stroke-dashoffset: 220;
-          animation: drawPath 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1.3s;
           transform: translate(-3px, 3px);
           opacity: 0.6;
+          ${isStatic ? '' : 'stroke-dasharray: 220; stroke-dashoffset: 220; animation: drawPath 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 1.3s;'}
         }
 
         .note-head {
           fill: #fdf6e3;
           transform-origin: 30px 80px;
-          opacity: 0;
-          transform: scale(0.5) rotate(-30deg);
-          animation: popHead 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 3.8s;
+          ${isStatic ? 'opacity: 1; transform: scale(1) rotate(-15deg);' : 'opacity: 0; transform: scale(0.5) rotate(-30deg); animation: popHead 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 3.8s;'}
         }
 
         .note-head-ghost {
           fill: #2aa198;
           transform-origin: 30px 80px;
-          opacity: 0;
-          transform: scale(0.5) rotate(-30deg) translate(-3px, 3px);
-          animation: popHead 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 4.1s;
+          ${isStatic ? 'opacity: 1; transform: scale(1) rotate(-15deg) translate(-3px, 3px);' : 'opacity: 0; transform: scale(0.5) rotate(-30deg) translate(-3px, 3px); animation: popHead 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 4.1s;'}
         }
 
         .brand-text-logo {
@@ -65,12 +60,10 @@ export default function AnimatedLogo() {
           letter-spacing: 28px;
           color: #fdf6e3;
           text-transform: uppercase;
-          opacity: 0;
-          transform: translateY(15px);
-          animation: fadeUp 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 2.5s;
           padding-left: 28px;
           text-shadow: 0 4px 20px rgba(0,0,0,0.5);
           margin-top: -10px;
+          ${isStatic ? 'opacity: 1; transform: translateY(0);' : 'opacity: 0; transform: translateY(15px); animation: fadeUp 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 2.5s;'}
         }
 
         .brand-sub-logo {
@@ -80,11 +73,19 @@ export default function AnimatedLogo() {
           letter-spacing: 14px;
           color: #2aa198;
           text-transform: uppercase;
-          opacity: 0;
-          transform: translateY(10px);
-          animation: fadeUp 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 3s;
           margin-top: 15px;
           padding-left: 14px;
+          ${isStatic ? 'opacity: 1; transform: translateY(0);' : 'opacity: 0; transform: translateY(10px); animation: fadeUp 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 3s;'}
+        }
+
+        @keyframes pulseGlow {
+          0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0 rgba(42, 161, 152, 0)); }
+          50% { transform: scale(1.02); opacity: 0.8; filter: drop-shadow(0 0 15px rgba(42, 161, 152, 0.4)); }
+          100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0 rgba(42, 161, 152, 0)); }
+        }
+
+        .loading-pulse {
+          animation: pulseGlow 2s ease-in-out infinite;
         }
 
         @keyframes drawStaff { to { stroke-dashoffset: 0; } }
@@ -95,7 +96,7 @@ export default function AnimatedLogo() {
 
 
       {/* Logo Mark */}
-      <div className="relative z-10 flex flex-col items-center">
+      <div className={`relative z-10 flex flex-col items-center ${isLoading ? 'loading-pulse' : ''}`}>
         <svg viewBox="0 0 100 120" className="w-[180px] h-[180px] overflow-visible mb-12 mt-4">
           <path className="staff-line" d="M -40 40 Q 50 38 140 40" style={{ animationDelay: "0.2s" }} />
           <path className="staff-line" d="M -40 60 Q 50 62 140 60" style={{ animationDelay: "0.4s" }} />

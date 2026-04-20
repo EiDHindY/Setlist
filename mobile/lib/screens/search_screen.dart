@@ -121,12 +121,17 @@ class _SearchScreenState extends State<SearchScreen> {
     if (savedSong != null) {
       // Promptly take the user to the YouTube version search
       if (mounted) {
-        Navigator.push(
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => VersionSearchScreen(song: savedSong),
           ),
         );
+
+        // If a song was added in Step 2, pass it back to Library for the "Quick Jump" SnackBar
+        if (result is Song && mounted) {
+          Navigator.pop(context, result);
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -192,6 +197,18 @@ class _SearchScreenState extends State<SearchScreen> {
           SafeArea(
             child: Column(
               children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    "STEP 1",
+                    style: GoogleFonts.montserrat(
+                      color: SolarizedTheme.cyan.withOpacity(0.6),
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                ),
                 // ── Search Header ──
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -232,13 +249,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                       icon: const Icon(Icons.close_rounded, color: SolarizedTheme.base01),
                                       onPressed: () {
                                         _searchController.clear();
-                                        setState(() {
-                                          _results.clear();
-                                          _suggestions.clear();
-                                          _selectedSongMetadata = null;
-                                          _showSuggestions = false;
-                                          _hasSearched = false;
-                                        });
+                                        _onSearchChanged('');
                                       },
                                     )
                                   : null,
@@ -586,13 +597,90 @@ class _SearchScreenState extends State<SearchScreen> {
     ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, curve: Curves.easeOut);
   }
 
+
+  Widget _buildResultsList({bool isOfficialOnly = false}) {
+    final filteredResults = isOfficialOnly 
+        ? _results.where((r) => r.isOfficial).toList()
+        : _results;
+
+    if (filteredResults.isEmpty && !_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isOfficialOnly ? Icons.verified_user_rounded : Icons.search_off_rounded,
+              size: 64, 
+              color: SolarizedTheme.base01.withOpacity(0.3)
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isOfficialOnly ? "No official metadata found." : "No results match your search.",
+              style: GoogleFonts.montserrat(color: SolarizedTheme.base01, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        if (_selectedSongMetadata != null) _buildPremiumBanner(),
+        Expanded(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              _handleScrollNotification(notification);
+              return false;
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(), 
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: filteredResults.length + (_isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == filteredResults.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(
+                      child: BrandedLoader(size: 40),
+                    ),
+                  );
+                }
+
+                final suggestion = filteredResults[index];
+                return _buildResultItem(suggestion)
+                    .animate(key: ValueKey("${suggestion.appleTrackId}_${suggestion.text}"))
+                    .fadeIn(duration: 300.ms, delay: ((index % 15) * 50).ms)
+                    .slideY(begin: 0.1, curve: Curves.easeOut);
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildResultItem(SearchSuggestion suggestion) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: SolarizedTheme.base02.withOpacity(0.4),
+        color: suggestion.isOfficial 
+            ? SolarizedTheme.cyan.withOpacity(0.05) 
+            : SolarizedTheme.base02.withOpacity(0.4),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SolarizedTheme.base01.withOpacity(0.1)),
+        border: Border.all(
+          color: suggestion.isOfficial 
+              ? SolarizedTheme.cyan.withOpacity(0.3) 
+              : SolarizedTheme.base01.withOpacity(0.1),
+          width: suggestion.isOfficial ? 1.5 : 1,
+        ),
+        boxShadow: suggestion.isOfficial ? [
+          BoxShadow(
+            color: SolarizedTheme.cyan.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ] : null,
       ),
       child: ListTile(
         onTap: () => _handleMasterSongSelection(suggestion),

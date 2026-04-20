@@ -20,17 +20,18 @@ class _LibraryScreenState extends State<LibraryScreen> with AutomaticKeepAliveCl
   @override
   bool get wantKeepAlive => true;
 
-  Future<List<Song>> _songsFuture = LibraryService().fetchLibrarySongs();
+  late Stream<List<Song>> _songsStream;
 
   @override
   void initState() {
     super.initState();
+    _songsStream = LibraryService().songsStream;
+    // Initial fetch to sync with cloud
+    LibraryService().fetchLibrarySongs();
   }
 
   void _refreshSongs() {
-    setState(() {
-      _songsFuture = LibraryService().fetchLibrarySongs();
-    });
+    LibraryService().fetchLibrarySongs();
   }
   Widget build(BuildContext context) {
     super.build(context);
@@ -51,11 +52,55 @@ class _LibraryScreenState extends State<LibraryScreen> with AutomaticKeepAliveCl
                     IconButton(
                       icon: const Icon(Icons.search_rounded, color: SolarizedTheme.base01),
                       onPressed: () async {
-                        await Navigator.push(
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const SearchScreen()),
                         );
-                        if (!LibraryService().isCacheFresh) {
+                        
+                        if (result is Song && mounted) {
+                          _refreshSongs();
+                          
+                          // THE "QUICK JUMP" SNACKBAR
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: SolarizedTheme.base02.withOpacity(0.95),
+                              behavior: SnackBarBehavior.floating,
+                              margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              duration: const Duration(seconds: 5),
+                              content: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Image.network(result.albumArt, width: 24, height: 24, fit: BoxFit.cover),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      "Added ${result.title} to collections",
+                                      style: GoogleFonts.montserrat(color: SolarizedTheme.base3, fontSize: 13, fontWeight: FontWeight.w500),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => SongDetailScreen(song: result)),
+                                      );
+                                    },
+                                    child: Text(
+                                      "VIEW",
+                                      style: GoogleFonts.montserrat(color: SolarizedTheme.cyan, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        } else if (!LibraryService().isCacheFresh) {
                           _refreshSongs();
                         }
                       },
@@ -101,14 +146,16 @@ class _LibraryScreenState extends State<LibraryScreen> with AutomaticKeepAliveCl
   }
 
   Widget _buildSongsList() {
-    return FutureBuilder<List<Song>>(
-      future: _songsFuture,
+    return StreamBuilder<List<Song>>(
+      stream: _songsStream,
+      initialData: LibraryService().cachedSongs,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !LibraryService().isCacheFresh) {
+        final songs = snapshot.data ?? [];
+
+        // Only show full screen loader if we have NO data at all
+        if (songs.isEmpty && snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: BrandedLoader(size: 80));
         }
-
-        final songs = snapshot.data ?? LibraryService().cachedSongs;
 
         if (songs.isEmpty) {
           return _buildEmptyState(
@@ -130,8 +177,7 @@ class _LibraryScreenState extends State<LibraryScreen> with AutomaticKeepAliveCl
 
         return RefreshIndicator(
           onRefresh: () async {
-            _refreshSongs();
-            await _songsFuture;
+            await LibraryService().fetchLibrarySongs();
           },
           color: SolarizedTheme.cyan,
           backgroundColor: SolarizedTheme.base02,

@@ -103,17 +103,19 @@ class _AuthWrapperState extends State<AuthWrapper> {
         final session = snapshot.data?.session;
         
         if (session != null) {
-          final isNewSession = _lastSessionId != session.user.id;
+          final isNewUser = _lastSessionId != session.user.id;
           _lastSessionId = session.user.id;
 
-          // If it's a "fresh" login in this session, show the transition splash
-          if (isNewSession) {
+          // If it's a completely NEW user login, show the transition splash
+          if (isNewUser) {
              return AuthSplashWrapper(
                onReady: () => AuthService.syncUserWithBackend(session),
+               key: ValueKey(session.user.id), // Force rebuild only for NEW user
                child: const MainLayout(),
              );
           }
           
+          // Stable return ensures session refreshes don't reset the UI index
           return const MainLayout();
         } 
         

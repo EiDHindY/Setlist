@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Setlist.Api.Data;
@@ -11,9 +12,11 @@ using Setlist.Api.Data;
 namespace Setlist.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260416014342_SplitSongVersions")]
+    partial class SplitSongVersions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -239,10 +242,6 @@ namespace Setlist.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("YouTubeId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -251,9 +250,8 @@ namespace Setlist.Api.Data.Migrations
 
                     b.HasIndex("SongId");
 
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("YouTubeId");
+                    b.HasIndex("YouTubeId")
+                        .IsUnique();
 
                     b.ToTable("SongVersions");
                 });
@@ -423,15 +421,7 @@ namespace Setlist.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Setlist.Shared.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Song");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Setlist.Shared.Models.UserSong", b =>

@@ -29,6 +29,17 @@ class SongVersion {
       duration: Duration(seconds: json['duration'] as int? ?? 0),
     );
   }
+
+  factory SongVersion.fromYouTubeResult(dynamic result) {
+    return SongVersion(
+      id: '', // Temporary ID for local cache
+      youtubeVideoId: result.videoId,
+      title: result.title,
+      channelName: result.channelName,
+      thumbnailUrl: result.thumbnailUrl,
+      duration: result.duration ?? Duration.zero,
+    );
+  }
 }
 
 class Song {
@@ -72,6 +83,24 @@ class Song {
       versions: json['versions'] != null 
           ? (json['versions'] as List).map((v) => SongVersion.fromJson(v)).toList()
           : [],
+    );
+  }
+
+  Song copyWith({
+    String? id,
+    String? title,
+    String? artist,
+    String? albumArt,
+    Duration? duration,
+    List<SongVersion>? versions,
+  }) {
+    return Song(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      artist: artist ?? this.artist,
+      albumArt: albumArt ?? this.albumArt,
+      duration: duration ?? this.duration,
+      versions: versions ?? this.versions,
     );
   }
 

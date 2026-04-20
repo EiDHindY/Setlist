@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -5,7 +6,7 @@ import '../models/song_model.dart';
 import '../services/youtube_search_service.dart';
 
 class LibraryService {
-  static const String _baseUrl = 'http://10.255.84.8:5169/api/library';
+  static const String _baseUrl = 'http://192.168.1.9:5169/api/library';
 
   static final LibraryService _instance = LibraryService._internal();
   factory LibraryService() => _instance;
@@ -14,13 +15,22 @@ class LibraryService {
   List<Song> _cachedSongs = [];
   bool _isCacheFresh = false;
 
+  final _songsController = StreamController<List<Song>>.broadcast();
+  Stream<List<Song>> get songsStream => _songsController.stream;
+
   /// Fetches the user's library songs from the cloud.
   Future<List<Song>> fetchLibrarySongs() async {
+    // Push cached songs immediately if available to any listeners
+    if (_cachedSongs.isNotEmpty) {
+      _songsController.add(_cachedSongs);
+    }
+
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return [];
 
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/songs/$userId'));
+      final response = await http.get(Uri.parse('$_baseUrl/songs/$userId'))
+          .timeout(const Duration(seconds: 5));
       
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -39,6 +49,7 @@ class LibraryService {
         }).toList();
         
         _isCacheFresh = true;
+        _songsController.add(_cachedSongs);
         return _cachedSongs;
       }
     } catch (e) {
@@ -67,12 +78,11 @@ class LibraryService {
         Uri.parse('$_baseUrl/save'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestData),
-      );
+      ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        _isCacheFresh = false;
         final data = jsonDecode(response.body);
-        return Song(
+        final newSong = Song(
           id: data['id'].toString(),
           title: data['title'] ?? suggestion.songTitle,
           artist: data['artist'] ?? suggestion.subtitle,
@@ -82,6 +92,15 @@ class LibraryService {
               ? (data['versions'] as List).map((v) => SongVersion.fromJson(v)).toList()
               : [],
         );
+        
+        // Optimistic cache update
+        if (!_cachedSongs.any((s) => s.id == newSong.id)) {
+           _cachedSongs.insert(0, newSong);
+           _songsController.add(_cachedSongs);
+        }
+        
+        _isCacheFresh = true; 
+        return newSong;
       }
     } catch (e) {
       print('🛑 Master Song Save Error: $e');
@@ -113,10 +132,20 @@ class LibraryService {
         Uri.parse('$_baseUrl/save/version'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestData),
-      );
+      ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        _isCacheFresh = false;
+        // Find and update the song in cache to reflect the new version instantly
+        final index = _cachedSongs.indexWhere((s) => s.id == songId);
+        if (index != -1) {
+          final updatedSong = _cachedSongs[index].copyWith(
+            versions: [..._cachedSongs[index].versions, SongVersion.fromYouTubeResult(result)],
+          );
+          _cachedSongs[index] = updatedSong;
+          _songsController.add(_cachedSongs);
+        }
+
+        _isCacheFresh = true;
         return true;
       }
     } catch (e) {
@@ -133,7 +162,7 @@ class LibraryService {
     try {
       final response = await http.delete(
         Uri.parse('$_baseUrl/songs/$userId/$songId'),
-      );
+      ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         _isCacheFresh = false;

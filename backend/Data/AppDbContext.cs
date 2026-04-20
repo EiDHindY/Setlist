@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<MusicSetlist> Setlists { get; set; }
     public DbSet<SetlistSong> SetlistSongs { get; set; }
     public DbSet<UserSong> UserSongs { get; set; }
+    public DbSet<SongVersion> SongVersions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,8 +30,7 @@ public class AppDbContext : DbContext
 
         // Song constraints
         modelBuilder.Entity<Song>()
-            .HasIndex(s => s.YouTubeId)
-            .IsUnique();
+            .HasIndex(s => s.AppleTrackId);
 
         modelBuilder.Entity<Song>()
             .HasIndex(s => s.ISRC)
@@ -41,6 +41,22 @@ public class AppDbContext : DbContext
             .HasOne(c => c.Song)
             .WithMany(s => s.Credits)
             .HasForeignKey(c => c.SongId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // One-to-Many: Song has many Versions (YouTube sources)
+        modelBuilder.Entity<SongVersion>()
+            .HasOne(sv => sv.Song)
+            .WithMany(s => s.Versions)
+            .HasForeignKey(sv => sv.SongId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SongVersion>()
+            .HasIndex(sv => sv.YouTubeId); // No longer unique, as multiple users can save the same video
+
+        modelBuilder.Entity<SongVersion>()
+            .HasOne(sv => sv.User)
+            .WithMany()
+            .HasForeignKey(sv => sv.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // One-to-Many: User has many Folders

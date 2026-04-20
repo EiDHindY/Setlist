@@ -46,7 +46,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // 1. Enforce the CORS policy so it is actively blocking weird requests
 app.UseCors("AllowClientApps");

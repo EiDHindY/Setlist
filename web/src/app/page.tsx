@@ -6,15 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Globe } from "lucide-react";
 import AnimatedLogo from "@/components/AnimatedLogo";
 import AnimatedLoader from "@/components/AnimatedLoader";
+import SplashScreen from "@/components/SplashScreen";
+import SideNav from "@/components/SideNav";
 
 export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -22,12 +26,17 @@ export default function Home() {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      // If we just got a session and we didn't have one before, show the splash again
+      if (newSession && !session) {
+        setShowSplash(true);
+      }
+      setSession(newSession);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [session]);
 
   if (!mounted) return null;
 
@@ -40,27 +49,36 @@ export default function Home() {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#002b36] flex items-center justify-center">
-        <AnimatedLoader />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#002b36] selection:bg-[#2aa198] selection:text-[#002b36]">
+      <AnimatePresence mode="wait">
+        {showSplash && (
+          <SplashScreen 
+            key="splash" 
+            isLoading={loading}
+            onComplete={() => setShowSplash(false)} 
+          />
+        )}
+      </AnimatePresence>
 
-      <main className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden">
-        <AnimatePresence>
-          {!session ? (
-            <motion.div 
+      <main className={`relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden transition-all duration-700 ${session && !showSplash ? 'pl-32' : ''}`}>
+        {session && !showSplash && (
+          <SideNav avatarUrl={session?.user?.user_metadata?.avatar_url} />
+        )}
+
+        {loading && !showSplash ? (
+          <AnimatedLoader />
+        ) : !showSplash ? (
+          <AnimatePresence>
+            {!session ? (
+              <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="w-full max-w-sm"
             >
               {/* Branding Section */}
-              <AnimatedLogo />
+              <AnimatedLogo isStatic={true} />
 
               {/* Login Actions */}
               <div className="bg-[#073642]/50 backdrop-blur-xl rounded-3xl p-8 border border-[#586e75]/10 shadow-2xl">
@@ -112,7 +130,8 @@ export default function Home() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+          </AnimatePresence>
+        ) : null}
       </main>
     </div>
   );
