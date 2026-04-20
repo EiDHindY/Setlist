@@ -9,6 +9,7 @@ import '../widgets/branded_loader.dart';
 import '../services/library_service.dart';
 import '../models/song_model.dart';
 import 'version_search_screen.dart';
+import 'song_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -33,6 +34,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _showSuggestions = false;
   String _errorMessage = '';
   SearchSuggestion? _selectedSongMetadata;
+  String? _sharedYouTubeId;
 
 
   Timer? _debounce;
@@ -119,7 +121,32 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     if (savedSong != null) {
-      // Promptly take the user to the YouTube version search
+      // EXPRESS LANE: If we have a shared link, SKIP STEP 2!
+      if (_sharedYouTubeId != null && mounted) {
+         setState(() => _isLoading = true);
+         final ytResult = await _searchService.getVideoDetails(_sharedYouTubeId!);
+         if (ytResult != null) {
+           await LibraryService().saveVersion(songId: savedSong.id, result: ytResult);
+           
+           // Create a locally updated version of the song to show in detail screen immediately
+           final updatedSong = savedSong.copyWith(
+             versions: [...savedSong.versions, SongVersion.fromYouTubeResult(ytResult)],
+           );
+
+           if (mounted) {
+             Navigator.pushReplacement(
+               context,
+               MaterialPageRoute(
+                 builder: (context) => SongDetailScreen(song: updatedSong),
+               ),
+             );
+           }
+           return;
+         }
+         setState(() => _isLoading = false);
+      }
+
+      // Default: Promptly take the user to the YouTube version search
       if (mounted) {
         final result = await Navigator.push(
           context,
@@ -157,14 +184,42 @@ class _SearchScreenState extends State<SearchScreen> {
       _searchController.text = query;
       _results.clear();
       _suggestions.clear();
+      _sharedYouTubeId = null;
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(0);
       }
     });
 
     try {
+      String searchQuery = query;
+
+      // Smart Detection: Is this a direct YouTube link?
+      if (query.contains("youtube.com") || query.contains("youtu.be")) {
+        final videoId = YouTubeSearchService.extractVideoId(query);
+        if (videoId != null) {
+          _sharedYouTubeId = videoId;
+          // Fetch the title so we can find the metadata for Step 1
+          final details = await _searchService.getVideoDetails(videoId);
+          if (details != null) {
+             final cleanTitle = _cleanYouTubeTitle(details.title);
+             final hasSeparator = details.title.contains('-') || details.title.contains('|') || details.title.contains(':');
+             
+             if (!hasSeparator) {
+                final cleanChannel = details.channelName.replaceAll(RegExp(r'- Topic', caseSensitive: false), '').trim();
+                if (cleanChannel.toLowerCase() != 'various artists') {
+                   searchQuery = "$cleanChannel $cleanTitle";
+                } else {
+                   searchQuery = cleanTitle;
+                }
+             } else {
+                searchQuery = cleanTitle;
+             }
+          }
+        }
+      }
+
       // Step 1: Force User to Metadata Results (iTunes/Deezer)
-      final results = await _searchService.getSuggestions(query);
+      final results = await _searchService.getSuggestions(searchQuery);
       setState(() {
         // Filter to only show songs (Step 1 requirement)
         _results = results.where((s) => s.type == SuggestionType.song).toList();
@@ -180,6 +235,25 @@ class _SearchScreenState extends State<SearchScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  String _cleanYouTubeTitle(String title) {
+    var cleaned = title;
+    // Remove bracketed info [Official Video], (Live), etc
+    cleaned = cleaned.replaceAll(RegExp(r'\[.*?\]'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'\(.*?\)'), '');
+    // Common promotional junk
+    final terms = [
+      'official video', 'music video', 'official audio', 'audio', 
+      'lyrics', 'lyric video', 'hq', 'hd', '4k', 'live', 'topic'
+    ];
+    for (final term in terms) {
+      cleaned = cleaned.replaceAll(RegExp('\\b$term\\b', caseSensitive: false), '');
+    }
+    // Clean extra spaces and punctuation often left behind
+    cleaned = cleaned.replaceAll(RegExp(r'[\-|:|_]'), ' ');
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return cleaned;
   }
 
   Future<void> _loadMoreResults() async {
