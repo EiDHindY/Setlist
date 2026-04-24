@@ -87,9 +87,9 @@ class PlaybackService {
       videoId: version.youtubeVideoId,
       autoPlay: true,
       params: const YoutubePlayerParams(
-        showFullscreenButton: false, // Disable the buggy button
+        showFullscreenButton: false,
         mute: false,
-        showControls: true,
+        showControls: false, // Hiding native controls to use our custom Pro UI
         playsInline: true,
         origin: 'https://www.youtube-nocookie.com',
       ),
