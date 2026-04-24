@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/app_config.dart';
+
 class AuthService {
-  // Your Fedora Machine's Local IP
-  static const String _backendUrl = 'http://192.168.1.9:5169/api/user/sync';
+  /// Syncs the current Supabase user with the C# Backend
+  static String get _backendUrl => '${AppConfig.baseUrl}/user/sync';
 
   /// Syncs the current Supabase user with the C# Backend
   /// This takes the Supabase Identity and registers it in our central database.

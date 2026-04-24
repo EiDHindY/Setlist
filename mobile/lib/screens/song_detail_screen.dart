@@ -5,6 +5,7 @@ import '../theme/solarized_theme.dart';
 import 'dart:ui';
 import 'version_search_screen.dart';
 import '../services/library_service.dart';
+import '../services/playback_service.dart';
 
 class SongDetailScreen extends StatefulWidget {
   final Song song;
@@ -333,16 +334,19 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             ],
           ),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.play_circle_fill_rounded, color: SolarizedTheme.cyan, size: 28),
-            const SizedBox(height: 4),
-            Text(
-              "${version.duration.inMinutes}:${(version.duration.inSeconds % 60).toString().padLeft(2, '0')}",
-              style: GoogleFonts.montserrat(color: SolarizedTheme.cyan.withOpacity(0.8), fontSize: 10),
-            )
-          ],
+        trailing: GestureDetector(
+          onTap: () => PlaybackService().play(_currentSong, version),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.play_circle_fill_rounded, color: SolarizedTheme.cyan, size: 28),
+              const SizedBox(height: 4),
+              Text(
+                "${version.duration.inMinutes}:${(version.duration.inSeconds % 60).toString().padLeft(2, '0')}",
+                style: GoogleFonts.montserrat(color: SolarizedTheme.cyan.withOpacity(0.8), fontSize: 10),
+              )
+            ],
+          ),
         ),
       ),
     );

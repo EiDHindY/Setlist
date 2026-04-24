@@ -43,7 +43,7 @@ dependencies:
 
   # ── YouTube & Audio ──────────────────────────────────────────
   youtube_player_iframe: ^5.1.0      # Official embedded YT player (both builds)
-  youtube_explode_dart: ^2.2.0       # Unofficial search + stream extraction (VIP)
+  youtube_explode_dart: ^3.0.5       # Unofficial search + stream extraction (VIP)
   just_audio: ^0.9.36                # Audio playback engine (VIP background play)
   audio_service: ^0.18.12            # Lock-screen controls & background service (VIP)
   shared_preferences: ^2.5.5

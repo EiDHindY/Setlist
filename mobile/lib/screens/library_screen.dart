@@ -151,9 +151,11 @@ class _LibraryScreenState extends State<LibraryScreen> with AutomaticKeepAliveCl
       initialData: LibraryService().cachedSongs,
       builder: (context, snapshot) {
         final songs = snapshot.data ?? [];
+        final bool isSyncing = LibraryService().isSyncing;
 
-        // Only show full screen loader if we have NO data at all
-        if (songs.isEmpty && snapshot.connectionState == ConnectionState.waiting) {
+        // Show loader if we are currently syncing AND have no songs, 
+        // OR if the stream is truly waiting for its first emission.
+        if ((isSyncing && songs.isEmpty) || (songs.isEmpty && snapshot.connectionState == ConnectionState.waiting)) {
           return const Center(child: BrandedLoader(size: 80));
         }
 

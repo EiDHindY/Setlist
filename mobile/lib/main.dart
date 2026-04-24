@@ -11,6 +11,7 @@ import 'screens/splash_screen.dart';
 import 'screens/search_screen.dart';
 import 'widgets/auth_splash_wrapper.dart';
 import 'services/share_service.dart';
+import 'widgets/unified_player.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// ── SHARED APP MAIN ────────────────────────────────────────────────
@@ -52,6 +53,20 @@ class MyApp extends StatelessWidget {
       title: 'Setlist',
       theme: SolarizedTheme.darkTheme,
       home: const SplashScreen(),
+      builder: (context, child) {
+        return Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              if (child != null) child,
+              const Align(
+                alignment: Alignment.bottomCenter,
+                child: UnifiedPlayer(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

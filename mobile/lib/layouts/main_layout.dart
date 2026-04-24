@@ -313,6 +313,8 @@ class _MainLayoutState extends State<MainLayout> with TickerProviderStateMixin {
               }),
             ),
 
+            // Global Player Overlay is now in main.dart builder
+
             // Top Left Branded Logo (Hidden on Profile)
             if (_currentIndex != 4)
               SafeArea(

@@ -4,9 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/song_model.dart';
 import '../services/youtube_search_service.dart';
+import '../config/app_config.dart';
 
 class LibraryService {
-  static const String _baseUrl = 'http://192.168.1.9:5169/api/library';
+  static String get _baseUrl => '${AppConfig.baseUrl}/library';
 
   static final LibraryService _instance = LibraryService._internal();
   factory LibraryService() => _instance;
@@ -14,19 +15,32 @@ class LibraryService {
 
   List<Song> _cachedSongs = [];
   bool _isCacheFresh = false;
+  bool _isSyncing = false;
 
   final _songsController = StreamController<List<Song>>.broadcast();
   Stream<List<Song>> get songsStream => _songsController.stream;
+  
+  final _syncController = StreamController<bool>.broadcast();
+  Stream<bool> get syncStream => _syncController.stream;
+
+  bool get isSyncing => _isSyncing;
 
   /// Fetches the user's library songs from the cloud.
   Future<List<Song>> fetchLibrarySongs() async {
+    _isSyncing = true;
+    _syncController.add(true);
+
     // Push cached songs immediately if available to any listeners
     if (_cachedSongs.isNotEmpty) {
       _songsController.add(_cachedSongs);
     }
 
     final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return [];
+    if (userId == null) {
+      _isSyncing = false;
+      _syncController.add(false);
+      return [];
+    }
 
     try {
       final response = await http.get(Uri.parse('$_baseUrl/songs/$userId'))
@@ -35,7 +49,6 @@ class LibraryService {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         _cachedSongs = data.map<Song>((json) {
-          // Mapping backend Song model to mobile Song model
           return Song(
             id: json['id'].toString(),
             title: json['title'] ?? 'Unknown Title',
@@ -49,14 +62,15 @@ class LibraryService {
         }).toList();
         
         _isCacheFresh = true;
-        _songsController.add(_cachedSongs);
-        return _cachedSongs;
       }
     } catch (e) {
       print('🛑 Library Fetch Error: $e');
     }
     
-    return _cachedSongs; // Return last cached even if error
+    _isSyncing = false;
+    _syncController.add(false);
+    _songsController.add(_cachedSongs); // Always emit to unblock UI
+    return _cachedSongs;
   }
 
   /// Saves only the Master Song metadata to the cloud library (Decoupled Phase 1).
