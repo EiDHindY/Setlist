@@ -10,21 +10,28 @@ export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    const handleAuth = async () => {
-      // Small delay to ensure the hash is parsed
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("Auth error:", error.message);
-        router.push("/");
-      } else {
-        // Success! Go to the home page (where the user will now be logged in)
-        router.push("/");
+    // Supabase automatically parses the URL hash in the background.
+    // We just wait for the auth state change event to confirm it's done.
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || session) {
+        // Flag for page.tsx to show the welcome splash — only on real login
+        sessionStorage.setItem('setlist_just_logged_in', '1');
+        // Use window.location instead of router.push to force a hard navigation
+        // and completely clear the OAuth hash from the URL.
+        window.location.href = "/";
       }
-    };
+    });
 
-    handleAuth();
-  }, [router]);
+    // Fallback in case the event already fired or we just need to redirect
+    setTimeout(() => {
+      sessionStorage.setItem('setlist_just_logged_in', '1');
+      window.location.href = "/";
+    }, 2000);
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#002b36] flex items-center justify-center flex-col gap-8 p-6 text-center">

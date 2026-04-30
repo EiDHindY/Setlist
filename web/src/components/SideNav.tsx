@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Home, User } from 'lucide-react';
 import BumpingHeadphonesIcon from './icons/BumpingHeadphonesIcon';
@@ -13,9 +13,13 @@ const tabs = [
   { id: 4, label: 'PROFILE', icon: User },
 ];
 
-export default function SideNav({ avatarUrl }: { avatarUrl?: string }) {
-  const [activeTab, setActiveTab] = useState(0);
+interface SideNavProps {
+  avatarUrl?: string;
+  activeTab?: number;
+  onTabChange?: (tabId: number) => void;
+}
 
+export default function SideNav({ avatarUrl, activeTab = 1, onTabChange }: SideNavProps) {
   return (
     <motion.div
       initial={{ x: -100, opacity: 0 }}
@@ -30,7 +34,7 @@ export default function SideNav({ avatarUrl }: { avatarUrl?: string }) {
           <div 
             key={tab.id} 
             className="relative group cursor-pointer"
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => onTabChange?.(tab.id)}
           >
             {/* Active Glow/Pill Background */}
             {isActive && (

@@ -1,8 +1,0 @@
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "icon_master.png"
-  image_path_android: "icon_rounded.png"
-  image_path_ios: "icon_ios.png"
-  adaptive_icon_background: "#002b36" # Restoration of sleek dark background
-  adaptive_icon_foreground: "vip_icon_foreground.png" # The one with the thin gold border

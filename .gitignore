@@ -11,11 +11,7 @@ web/.next/
 web/out/
 web/build/
 
-# Expo / React Native
-mobile/.expo/
-mobile/web-build/
-
-# C# and .NET Core Build Artifacts (Global)
+# C# and .NET Core Build Artifacts
 **/bin/
 **/obj/
 backend/appsettings.Development.json
@@ -37,7 +33,18 @@ backend/appsettings.*.json
 .Trashes
 ehthumbs.db
 Thumbs.db
+.directory
 
 # Agent/Brain specific artifacts 
 .agenthistory
 .agentmemory
+.agent/
+
+# IDE
+.vscode/
+.idea/
+
+# Debug logs
+*.log
+flutter_log.txt
+npm-debug.log*
