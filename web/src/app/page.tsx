@@ -26,14 +26,14 @@ export default function HomePage() {
   // ── Auth State ────────────────────────────────────────────────────
   const [session, setSession] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
-  // Start as false — only show splash for genuine new logins, not session restorations
-  const [showSplash, setShowSplash] = useState(false);
+  // Start as true so it shows on every hard refresh/cold start
+  const [showSplash, setShowSplash] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [synced, setSynced] = useState(false);
 
   // ── App State ─────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState(1); // Default: COLLECTION
+  const [activeTab, setActiveTab] = useState(0); // Default: HOME
   const [showSearch, setShowSearch] = useState(false);
   const [sharedQuery, setSharedQuery] = useState<string | undefined>(undefined);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
@@ -41,17 +41,6 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true);
-
-    // Check if we just came from the OAuth login flow.
-    // The auth/callback page sets this flag before redirecting here.
-    // This is the ONLY reliable way to show the splash — Supabase's SIGNED_IN
-    // event also fires on token refresh, which would retrigger the splash on every
-    // tab switch after the token expires (~60 min).
-    const justLoggedIn = sessionStorage.getItem('setlist_just_logged_in') === '1';
-    if (justLoggedIn) {
-      sessionStorage.removeItem('setlist_just_logged_in'); // consume immediately
-      setShowSplash(true);
-    }
 
     supabase.auth.getSession()
       .then(({ data: { session: s } }) => {
@@ -64,8 +53,8 @@ export default function HomePage() {
       });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      // No splash logic here — handled via sessionStorage flag above.
-      // This only keeps session state in sync (sign out, token refresh, etc.)
+      // We never force showSplash to true here to avoid re-triggering on tab switches/token refreshes.
+      // The splash only shows on initial mount because it starts as true.
       setSession(newSession as unknown as Record<string, unknown>);
       setLoading(false);
     });

@@ -1,57 +1,42 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Headphones } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 export default function SyncedHeadsetsIcon({ isActive, size = 26 }: { isActive: boolean; size?: number }) {
   return (
     <div style={{ width: size, height: size }} className="relative flex justify-center items-center">
+      {/* Floating Group Animation */}
+      <motion.div
+        animate={isActive ? { y: [-1.5, 1.5, -1.5] } : { y: 0 }}
+        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+        className="relative z-10"
+      >
+        <Users 
+          size={size} 
+          className={`transition-all duration-500 ${isActive ? 'text-[#2aa198] drop-shadow-[0_0_8px_rgba(42,161,152,0.4)]' : 'text-[#586e75]'}`} 
+          strokeWidth={isActive ? 2.5 : 2}
+        />
+      </motion.div>
+
+      {/* "Live" Indicator Dot */}
       {isActive && (
-        <div className="absolute inset-0 flex items-center justify-center gap-[2px] z-20 pointer-events-none">
-          <motion.div
-            className="w-[3px] rounded-full bg-[#fdf6e3]"
-            animate={{ height: ['30%', '80%', '30%'] }}
-            transition={{ repeat: Infinity, duration: 0.4, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="w-[3px] rounded-full bg-[#fdf6e3]"
-            animate={{ height: ['20%', '100%', '20%'] }}
-            transition={{ repeat: Infinity, duration: 0.3, ease: "easeInOut", delay: 0.1 }}
-          />
-          <motion.div
-            className="w-[3px] rounded-full bg-[#fdf6e3]"
-            animate={{ height: ['40%', '60%', '40%'] }}
-            transition={{ repeat: Infinity, duration: 0.5, ease: "easeInOut", delay: 0.2 }}
-          />
-        </div>
+         <motion.div 
+           className="absolute -top-[2px] -right-[2px] w-[6px] h-[6px] bg-[#2aa198] rounded-full shadow-[0_0_8px_rgba(42,161,152,0.6)]"
+           initial={{ scale: 0, opacity: 0 }}
+           animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+           transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+         />
       )}
 
-      {/* Left Headphone (Cyan) - Lower opacity */}
-      <motion.div
-        className="absolute"
-        initial={false}
-        animate={{ 
-          x: isActive ? -7 : -3, 
-          y: 0, 
-          opacity: isActive ? 0.4 : 0.3 
-        }}
-        transition={{ duration: 0.5, ease: "backOut" }}
-      >
-        <Headphones size={size * 0.9} color="#2aa198" strokeWidth={isActive ? 2 : 1.5} />
-      </motion.div>
-
-      {/* Right Headphone (Magenta) - Main focus */}
-      <motion.div
-        className="absolute"
-        initial={false}
-        animate={{ 
-          x: isActive ? 7 : 3, 
-          y: 0,
-          opacity: isActive ? 1 : 0.7
-        }}
-        transition={{ duration: 0.5, ease: "backOut" }}
-      >
-        <Headphones size={size * 0.9} color={isActive ? '#d33682' : '#586e75'} strokeWidth={isActive ? 2.5 : 2} />
-      </motion.div>
+      {/* Subtle Glow Background */}
+      {isActive && (
+        <motion.div
+          className="absolute inset-0 bg-[#2aa198]/10 rounded-full blur-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+        />
+      )}
     </div>
   );
 }

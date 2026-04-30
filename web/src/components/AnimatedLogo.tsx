@@ -96,7 +96,7 @@ export default function AnimatedLogo({ isStatic = false, isLoading = false }: An
 
 
       {/* Logo Mark */}
-      <div className={`relative z-10 flex flex-col items-center ${isLoading ? 'loading-pulse' : ''}`}>
+      <div className="relative z-10 flex flex-col items-center">
         <svg viewBox="0 0 100 120" className="w-[180px] h-[180px] overflow-visible mb-12 mt-4">
           <path className="staff-line" d="M -40 40 Q 50 38 140 40" style={{ animationDelay: "0.2s" }} />
           <path className="staff-line" d="M -40 60 Q 50 62 140 60" style={{ animationDelay: "0.4s" }} />
