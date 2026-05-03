@@ -17,11 +17,11 @@ export default function InstallBanner() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ y: -80, opacity: 0 }}
+        initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -80, opacity: 0 }}
+        exit={{ y: 80, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 2 }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-[calc(100%-2rem)]"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] max-w-sm w-[calc(100%-2rem)]"
       >
         <div className="glass-heavy rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl border-[var(--sol-cyan)]/20 border">
           {/* Icon */}

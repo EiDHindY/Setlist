@@ -246,7 +246,11 @@ export default function VersionSearch({ song, isOpen, onClose }: VersionSearchPr
                           {result.title}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1.5">
-                          <User size={10} className="text-[var(--sol-base01)] flex-shrink-0" />
+                          {result.channelAvatarUrl ? (
+                            <img src={result.channelAvatarUrl} alt={result.channelName} className="w-[14px] h-[14px] rounded-full object-cover flex-shrink-0 border border-[var(--sol-base01)]/20" />
+                          ) : (
+                            <User size={10} className="text-[var(--sol-base01)] flex-shrink-0" />
+                          )}
                           <p className="text-[var(--sol-base1)] text-[11px] truncate font-[family-name:var(--font-montserrat)]">
                             {result.channelName}
                           </p>
@@ -324,7 +328,11 @@ export default function VersionSearch({ song, isOpen, onClose }: VersionSearchPr
 
                 {/* Channel */}
                 <div className="flex items-center gap-2 mb-3">
-                  <User size={14} className="text-[var(--sol-cyan)]" />
+                  {detailResult.channelAvatarUrl ? (
+                    <img src={detailResult.channelAvatarUrl} alt={detailResult.channelName} className="w-5 h-5 rounded-full object-cover border border-[var(--sol-cyan)]/20" />
+                  ) : (
+                    <User size={14} className="text-[var(--sol-cyan)]" />
+                  )}
                   <span className="text-[var(--sol-cyan)] text-sm font-semibold font-[family-name:var(--font-montserrat)]">
                     {detailResult.channelName}
                   </span>

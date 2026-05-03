@@ -107,7 +107,7 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
   return (
     <div className="flex flex-col h-full">
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 h-16">
+      <div className="flex items-center justify-between px-6 py-4 md:pt-10 flex-shrink-0 h-16 md:h-22">
         <div className="flex-1 mr-4 flex items-center h-full">
           <AnimatePresence>
             {showLocalSearch && (
@@ -149,7 +149,10 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
             <Search size={18} />
           </button>
           <button
-            onClick={onOpenSearch}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenSearch();
+            }}
             className="p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer"
           >
             <Plus size={18} className="text-[var(--sol-cyan)]" />

@@ -60,7 +60,7 @@ async function fetchDeezerSuggestions(query: string): Promise<SearchSuggestion[]
 
   try {
     const params = new URLSearchParams({ q: query, limit: '15' });
-    const response = await fetch(`https://api.deezer.com/search?${params}`);
+    const response = await fetch(`/api/deezer?${params}`);
     if (!response.ok) return [];
 
     const data = await response.json();
@@ -151,27 +151,40 @@ export async function searchYouTube(
     const items = data.items as Record<string, unknown>[];
     if (!items?.length) return [];
 
-    // Fetch durations in bulk
+    // Fetch video details and channel details in bulk
     const videoIds = items.map((item) => {
       const id = item.id as Record<string, string>;
       return id.videoId;
     });
-    const durations = await getVideoDurations(videoIds);
+    
+    const channelIds = Array.from(new Set(
+      items.map((item) => {
+        const snippet = item.snippet as Record<string, unknown>;
+        return snippet.channelId ? String(snippet.channelId) : '';
+      }).filter(Boolean)
+    ));
+
+    const [videoDetails, channelDetails] = await Promise.all([
+      getVideoDetailsBulk(videoIds),
+      getChannelDetailsBulk(channelIds)
+    ]);
 
     return items.map((item): YouTubeSearchResult => {
       const id = item.id as Record<string, string>;
       const snippet = item.snippet as Record<string, unknown>;
       const thumbnails = snippet.thumbnails as Record<string, Record<string, string>>;
       const videoId = id.videoId;
+      const channelId = snippet.channelId ? String(snippet.channelId) : undefined;
 
       return {
         videoId,
         title: String(snippet.title),
         channelName: String(snippet.channelTitle),
-        channelId: snippet.channelId ? String(snippet.channelId) : undefined,
+        channelId,
+        channelAvatarUrl: channelId ? channelDetails[channelId] : undefined,
         thumbnailUrl: thumbnails?.high?.url ?? thumbnails?.default?.url ?? '',
-        duration: durations[videoId],
-        viewCount: 0, // YouTube search API v3 doesn't return views directly
+        duration: videoDetails[videoId]?.duration ?? 0,
+        viewCount: videoDetails[videoId]?.viewCount ?? 0,
         isOfficial: false,
       };
     });
@@ -223,13 +236,13 @@ export async function getVideoDetails(videoId: string): Promise<YouTubeSearchRes
 }
 
 /**
- * Bulk fetch video durations.
+ * Bulk fetch video durations and statistics.
  */
-async function getVideoDurations(videoIds: string[]): Promise<Record<string, number>> {
+async function getVideoDetailsBulk(videoIds: string[]): Promise<Record<string, { duration: number, viewCount: number }>> {
   if (!videoIds.length) return {};
 
   const params = new URLSearchParams({
-    part: 'contentDetails',
+    part: 'contentDetails,statistics',
     id: videoIds.join(','),
     key: config.youtubeApiKey,
   });
@@ -240,15 +253,56 @@ async function getVideoDurations(videoIds: string[]): Promise<Record<string, num
 
     const data = await response.json();
     const items = data.items as Record<string, unknown>[];
-    const durations: Record<string, number> = {};
+    const details: Record<string, { duration: number, viewCount: number }> = {};
 
     for (const item of items) {
       const id = String(item.id);
       const contentDetails = item.contentDetails as Record<string, string>;
-      durations[id] = parseIsoDuration(contentDetails.duration);
+      const statistics = item.statistics as Record<string, string> | undefined;
+      
+      details[id] = {
+        duration: parseIsoDuration(contentDetails.duration),
+        viewCount: statistics ? parseInt(statistics.viewCount || '0', 10) : 0,
+      };
     }
 
-    return durations;
+    return details;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Bulk fetch channel details (for avatars).
+ */
+async function getChannelDetailsBulk(channelIds: string[]): Promise<Record<string, string>> {
+  if (!channelIds.length) return {};
+
+  // YouTube API limits bulk fetches to 50 IDs per request.
+  // We only ever request maxResults=10, so a single request is fine.
+  const params = new URLSearchParams({
+    part: 'snippet',
+    id: channelIds.join(','),
+    key: config.youtubeApiKey,
+  });
+
+  try {
+    const response = await fetch(`${config.youtubeApiUrl}/channels?${params}`);
+    if (!response.ok) return {};
+
+    const data = await response.json();
+    const items = data.items as Record<string, unknown>[];
+    const details: Record<string, string> = {};
+
+    for (const item of items) {
+      const id = String(item.id);
+      const snippet = item.snippet as Record<string, unknown>;
+      const thumbnails = snippet.thumbnails as Record<string, Record<string, string>>;
+      
+      details[id] = thumbnails?.default?.url ?? thumbnails?.high?.url ?? '';
+    }
+
+    return details;
   } catch {
     return {};
   }

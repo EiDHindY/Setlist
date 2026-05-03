@@ -59,7 +59,11 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         {/* ── Top Bar ────────────────────────────────────────────── */}
         <div className="relative flex items-center px-4 py-3 flex-shrink-0 z-10">
           <button
-            onClick={onBack}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onBack();
+            }}
             className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
           >
             <ArrowLeft size={20} className="text-[var(--sol-cyan)]" />

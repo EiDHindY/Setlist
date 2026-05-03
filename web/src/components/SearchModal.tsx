@@ -140,6 +140,15 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
     setLoading(false);
   };
 
+  const [mountedTime] = useState(Date.now());
+
+  // Prevent ghost clicks from immediately closing the modal
+  const handleBackdropClick = useCallback(() => {
+    if (Date.now() - mountedTime > 150) {
+      onClose();
+    }
+  }, [mountedTime, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -148,7 +157,7 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-[10vh]"
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <motion.div
         initial={{ y: 30, opacity: 0, scale: 0.95 }}
@@ -179,7 +188,7 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
                   onChange={(e) => handleQueryChange(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && performSearch(query)}
                   placeholder="Search for a song..."
-                  className="flex-1 bg-transparent text-[var(--sol-base2)] text-sm outline-none placeholder:text-[var(--sol-base01)]/70 font-[family-name:var(--font-montserrat)]"
+                  className="flex-1 bg-transparent text-[var(--sol-base2)] text-base outline-none placeholder:text-[var(--sol-base01)]/70"
                 />
                 {query && (
                   <button
@@ -194,7 +203,7 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
           </div>
 
           {/* Step indicator */}
-          <p className="text-center mt-2 text-[var(--sol-cyan)]/60 text-[10px] font-bold tracking-[3px] font-[family-name:var(--font-montserrat)]">
+          <p className="text-center mt-2 text-[var(--sol-cyan)]/60 text-xs font-bold tracking-[3px]">
             STEP 1
           </p>
         </div>
@@ -218,20 +227,26 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03 }}
                         onClick={() => handleSelectSong(s)}
-                        className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-[var(--sol-base02)]/80 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center gap-4 px-3 py-3 rounded-xl bg-transparent hover:bg-[var(--sol-base02)]/60 border border-transparent hover:border-[var(--sol-base01)]/10 transition-smooth cursor-pointer text-left group"
                       >
-                        <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--sol-cyan)]/10">
+                        <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--sol-cyan)]/10 shadow-sm">
                           {s.imageUrl ? (
                             <img src={s.imageUrl} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Music size={14} className="text-[var(--sol-cyan)]" />
+                              <Music size={16} className="text-[var(--sol-cyan)]" />
                             </div>
                           )}
                         </div>
-                        <span className="text-[var(--sol-base2)] text-sm truncate font-[family-name:var(--font-montserrat)]">
-                          {s.text}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[var(--sol-base3)] text-base font-bold truncate">
+                            {s.songTitle ?? s.text.split(' - ')[0]}
+                          </p>
+                          <p className="text-[var(--sol-base1)] text-sm truncate mt-0.5">
+                            {s.subtitle ?? s.text.split(' - ').pop()}
+                          </p>
+                        </div>
+                        <ChevronRight size={16} className="text-[var(--sol-base01)]/40 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                       </motion.button>
                     ))}
                   </AnimatePresence>
@@ -263,10 +278,10 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[var(--sol-base3)] text-sm font-bold truncate font-[family-name:var(--font-montserrat)]">
+                          <p className="text-[var(--sol-base3)] text-base font-bold truncate">
                             {s.songTitle ?? s.text.split(' - ')[0]}
                           </p>
-                          <p className="text-[var(--sol-base1)] text-xs truncate font-[family-name:var(--font-montserrat)]">
+                          <p className="text-[var(--sol-base1)] text-sm truncate">
                             {s.subtitle ?? s.text.split(' - ').pop()}
                           </p>
                         </div>
@@ -281,7 +296,7 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
               {hasSearched && results.length === 0 && !loading && (
                 <div className="flex flex-col items-center justify-center py-20 px-8">
                   <Search size={48} className="text-[var(--sol-base01)]/30 mb-4" />
-                  <p className="text-[var(--sol-base1)] text-sm text-center font-[family-name:var(--font-montserrat)]">
+                  <p className="text-[var(--sol-base1)] text-base text-center">
                     No results found for &ldquo;{query}&rdquo;
                   </p>
                 </div>
@@ -294,7 +309,7 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
                   <h3 className="text-[var(--sol-base1)] text-lg font-bold mb-2 font-[family-name:var(--font-outfit)]">
                     Setlist Search
                   </h3>
-                  <p className="text-[var(--sol-base01)] text-sm text-center leading-relaxed font-[family-name:var(--font-montserrat)]">
+                  <p className="text-[var(--sol-base01)] text-sm text-center leading-relaxed">
                     1- search for your song<br />
                     2- add versions inside of that song to make a collection
                   </p>

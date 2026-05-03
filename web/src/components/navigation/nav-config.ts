@@ -39,4 +39,5 @@ export interface SideNavProps {
   onTabChange?: (tabId: number) => void;
   activeSubTab?: string;
   onSubTabChange?: (subId: string) => void;
+  isHidden?: boolean;
 }

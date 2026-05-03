@@ -307,6 +307,7 @@ export default function HomePage() {
             onTabChange={handleTabChange}
             activeSubTab={activeSubTab}
             onSubTabChange={setActiveSubTab}
+            isHidden={!!selectedSong && activeTab === 1}
           />
 
           {/* Content Area */}

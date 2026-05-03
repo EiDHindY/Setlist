@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { tabs, collectionSubTabs, SideNavProps } from './nav-config';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
-export const MobileBottomNav = ({ avatarUrl, activeTab, onTabChange, activeSubTab, onSubTabChange }: SideNavProps) => {
+export const MobileBottomNav = ({ avatarUrl, activeTab, onTabChange, activeSubTab, onSubTabChange, isHidden }: SideNavProps) => {
   const [isDeepOpen, setIsDeepOpen] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(true);
 
@@ -31,8 +31,8 @@ export const MobileBottomNav = ({ avatarUrl, activeTab, onTabChange, activeSubTa
     <motion.div
       initial={{ opacity: 0, y: 100, x: '-50%' }}
       animate={{ 
-        opacity: isVisible ? 1 : 0, 
-        y: isVisible ? 0 : 100,
+        opacity: (isVisible && !isHidden) ? 1 : 0, 
+        y: (isVisible && !isHidden) ? 0 : 100,
         x: '-50%' 
       }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}

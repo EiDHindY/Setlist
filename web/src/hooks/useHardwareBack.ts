@@ -23,10 +23,11 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
   }, [onClose]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    // Skip if not open or SSR
+    if (!isOpen || typeof window === 'undefined') return;
 
-    // Increment global ID for each new state push
-    const currentId = ++globalStateId;
+    // Use Date.now() instead of a module-level variable to survive Next.js Hot Reloads
+    const currentId = Date.now();
 
     // Push state immediately while preserving Next.js internal state
     window.history.pushState({ ...window.history.state, modalId, id: currentId }, '');
@@ -40,9 +41,14 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
+    // Wait 150ms before listening to prevent instantaneous 'ghost' popstate events
+    // that some browsers/frameworks mistakenly fire immediately after a pushState.
+    const timeoutId = setTimeout(() => {
+      window.addEventListener('popstate', handlePopState);
+    }, 150);
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('popstate', handlePopState);
 
       // If the component is unmounting or isOpen became false via the UI,

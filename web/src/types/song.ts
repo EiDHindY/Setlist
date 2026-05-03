@@ -40,6 +40,7 @@ export interface YouTubeSearchResult {
   title: string;
   channelName: string;
   channelId?: string;
+  channelAvatarUrl?: string;
   thumbnailUrl: string;
   duration?: number; // seconds
   viewCount: number;
