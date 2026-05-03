@@ -4,7 +4,13 @@
 
 export const config = {
   /** Base URL for the C# API backend */
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5169',
+  get apiUrl() {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5169';
+    if (typeof window !== 'undefined' && envUrl.includes('localhost')) {
+      return envUrl.replace('localhost', window.location.hostname);
+    }
+    return envUrl;
+  },
 
   /** Supabase project URL */
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,

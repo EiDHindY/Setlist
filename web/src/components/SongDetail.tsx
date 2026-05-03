@@ -14,6 +14,7 @@ import type { Song, SongVersion } from '@/types/song';
 import { formatDuration } from '@/types/song';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import VersionSearch from './VersionSearch';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 interface SongDetailProps {
   song: Song;
@@ -34,6 +35,9 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const [showVersionSearch, setShowVersionSearch] = useState(false);
   const [artworkExpanded, setArtworkExpanded] = useState(false);
   const { play, state } = usePlayback();
+
+  useHardwareBack(true, onBack, `song_detail_${song.id}`);
+  useHardwareBack(artworkExpanded, () => setArtworkExpanded(false), `artwork_expanded_${song.id}`);
 
   const handlePlayVersion = useCallback((version: SongVersion) => {
     play(song, version);

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Pause, Maximize2, Minimize2 } from 'lucide-react';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import { useMediaSession, useWakeLock, hapticTap } from '@/hooks/useNative';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 export default function Player() {
   const { state, stop, togglePlayPause, setPlaying, toggleExpand } = usePlayback();
@@ -19,6 +20,8 @@ export default function Player() {
   const apiReady = useRef(false);
 
   const { song, version, isPlaying, isExpanded } = state;
+
+  useHardwareBack(isExpanded, () => toggleExpand(), 'player_expanded');
 
   // Load YouTube IFrame API once
   useEffect(() => {

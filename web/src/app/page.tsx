@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Swords, PartyPopper } from "lucide-react";
+import { Home, Swords, PartyPopper, LogOut } from "lucide-react";
 import AnimatedLogo from "@/components/AnimatedLogo";
 import AnimatedLoader from "@/components/AnimatedLoader";
 import SplashScreen from "@/components/SplashScreen";
@@ -21,6 +21,7 @@ import UnderDevelopment from "@/components/UnderDevelopment";
 import InstallBanner from "@/components/InstallBanner";
 import { syncUserWithBackend } from "@/services/auth";
 import type { Song } from "@/types/song";
+import { useTabHistory } from "@/hooks/useTabHistory";
 
 export default function HomePage() {
   // ── Auth State ────────────────────────────────────────────────────
@@ -33,7 +34,11 @@ export default function HomePage() {
   const [synced, setSynced] = useState(false);
 
   // ── App State ─────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState(0); // Default: HOME
+  const [showExitModal, setShowExitModal] = useState(false);
+  const handleExitRequest = useCallback(() => {
+    setShowExitModal(true);
+  }, []);
+  const { activeTab, activeSubTab, setTab: setActiveTab, setSubTab: setActiveSubTab } = useTabHistory(0, 'songs', handleExitRequest);
   const [showSearch, setShowSearch] = useState(false);
   const [sharedQuery, setSharedQuery] = useState<string | undefined>(undefined);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
@@ -73,21 +78,21 @@ export default function HomePage() {
       setSharedQuery(shared);
       setShowSearch(true);
       // Clean URL
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState(window.history.state, '', '/');
     }
 
     // Shortcut: /?action=search
     const action = params.get('action');
     if (action === 'search') {
       setShowSearch(true);
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState(window.history.state, '', '/');
     }
 
     // Shortcut: /?tab=1
     const tab = params.get('tab');
     if (tab) {
       setActiveTab(parseInt(tab, 10));
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState(window.history.state, '', '/');
     }
   }, []);
 
@@ -175,8 +180,11 @@ export default function HomePage() {
             className="h-full"
           >
             <Library
+              userId={(session as Record<string, Record<string, string>>)?.user?.id}
               onOpenSearch={() => setShowSearch(true)}
               onSelectSong={setSelectedSong}
+              activeSubTab={activeSubTab}
+              onSubTabChange={setActiveSubTab}
             />
           </motion.div>
         );
@@ -297,10 +305,12 @@ export default function HomePage() {
             avatarUrl={(session as Record<string, Record<string, Record<string, string>>>)?.user?.user_metadata?.avatar_url}
             activeTab={activeTab}
             onTabChange={handleTabChange}
+            activeSubTab={activeSubTab}
+            onSubTabChange={setActiveSubTab}
           />
 
           {/* Content Area */}
-          <main className="flex-1 ml-[100px] relative overflow-hidden">
+          <main className="flex-1 md:ml-[100px] relative overflow-hidden">
             <AnimatePresence mode="wait">
               {renderContent()}
             </AnimatePresence>
@@ -323,6 +333,45 @@ export default function HomePage() {
             onSongAdded={handleSongAdded}
             initialQuery={sharedQuery}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Exit Modal */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowExitModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-[var(--sol-base03)] border border-[var(--sol-base01)]/20 p-6 rounded-3xl shadow-2xl max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold text-[var(--sol-base3)] mb-2 font-[family-name:var(--font-outfit)]">Exit Setlist?</h2>
+              <p className="text-[var(--sol-base1)] text-sm mb-6 font-[family-name:var(--font-montserrat)]">Are you sure you want to close the app?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowExitModal(false)}
+                  className="flex-1 py-3 rounded-2xl bg-[var(--sol-base02)] text-[var(--sol-base2)] font-bold text-sm transition-bounce hover:scale-[1.02] active:scale-95 cursor-pointer font-[family-name:var(--font-montserrat)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => window.history.go(-2)}
+                  className="flex-1 flex justify-center items-center gap-2 py-3 rounded-2xl bg-[var(--sol-red)]/10 text-[var(--sol-red)] border border-[var(--sol-red)]/30 font-bold text-sm transition-bounce hover:scale-[1.02] hover:bg-[var(--sol-red)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-montserrat)]"
+                >
+                  <LogOut size={16} />
+                  Quit
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

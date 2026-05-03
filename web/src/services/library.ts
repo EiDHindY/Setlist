@@ -22,7 +22,7 @@ export async function fetchLibrarySongs(userId: string): Promise<Song[]> {
     const data = await response.json();
     return data.map((json: Record<string, unknown>) => parseSong(json));
   } catch (e) {
-    console.error('🛑 Library Fetch Error:', e);
+    console.warn('🛑 Library Fetch Error:', e);
     return [];
   }
 }
@@ -56,7 +56,7 @@ export async function saveMasterSong(
     const data = await response.json();
     return parseSong(data);
   } catch (e) {
-    console.error('🛑 Master Song Save Error:', e);
+    console.warn('🛑 Master Song Save Error:', e);
     return null;
   }
 }
@@ -89,7 +89,7 @@ export async function saveVersion(
 
     return response.ok;
   } catch (e) {
-    console.error('🛑 Version Save Error:', e);
+    console.warn('🛑 Version Save Error:', e);
     return false;
   }
 }
@@ -109,7 +109,7 @@ export async function removeSongFromLibrary(
 
     return response.ok;
   } catch (e) {
-    console.error('🛑 Library Remove Error:', e);
+    console.warn('🛑 Library Remove Error:', e);
     return false;
   }
 }

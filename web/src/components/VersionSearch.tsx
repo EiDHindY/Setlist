@@ -12,6 +12,7 @@ import { supabase } from '@/utils/supabase';
 import { searchYouTube, getVideoDetails, extractVideoId } from '@/services/youtube-search';
 import { saveVersion } from '@/services/library';
 import { formatDuration, formatViewCount } from '@/types/song';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 interface VersionSearchProps {
   song: Song;
@@ -44,6 +45,9 @@ export default function VersionSearch({ song, isOpen, onClose }: VersionSearchPr
       setDetailResult(null);
     }
   }, [isOpen, song.id]);
+
+  useHardwareBack(isOpen, () => onClose(anyAdded), 'version_search');
+  useHardwareBack(!!detailResult, () => setDetailResult(null), 'version_detail');
 
   const performInitialSearch = async () => {
     setLoading(true);

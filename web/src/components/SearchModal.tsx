@@ -16,6 +16,7 @@ import {
   cleanYouTubeTitle,
 } from '@/services/youtube-search';
 import { saveMasterSong, saveVersion } from '@/services/library';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -51,6 +52,8 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
       setSharedYouTubeId(null);
     }
   }, [isOpen]);
+
+  useHardwareBack(isOpen, onClose, 'search_modal');
 
   // ── Live Suggestions ──────────────────────────────────────────────
 

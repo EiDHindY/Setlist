@@ -39,7 +39,7 @@ export default function ProfilePanel({ session }: ProfilePanelProps) {
         {/* Avatar */}
         <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[var(--sol-cyan)] shadow-[0_0_20px_rgba(42,161,152,0.3)]">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center">
               <span className="text-[var(--sol-cyan)] text-3xl font-bold font-[family-name:var(--font-outfit)]">
