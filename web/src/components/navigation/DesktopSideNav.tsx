@@ -1,17 +1,20 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { tabs, SideNavProps } from './nav-config';
 
-export const DesktopSideNav = ({ avatarUrl, activeTab, onTabChange }: SideNavProps) => (
-  <motion.div
-    initial={{ x: -100, opacity: 0 }}
-    animate={{ x: 0, opacity: 1 }}
-    transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 20 }}
-    className="fixed left-6 top-1/2 -translate-y-1/2 flex flex-col items-center py-8 px-4 bg-[#073642]/60 backdrop-blur-3xl rounded-[40px] border border-[#586e75]/20 shadow-2xl z-40 gap-8"
-  >
-    {tabs.map((tab) => {
+export const DesktopSideNav = ({ avatarUrl, activeTab, onTabChange, isHidden }: SideNavProps) => (
+  <AnimatePresence>
+    {!isHidden && (
+      <motion.div
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: -100, opacity: 0 }}
+        transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 20 }}
+        className="fixed left-6 top-1/2 -translate-y-1/2 flex flex-col items-center py-8 px-4 bg-[var(--sol-base02)]/60 backdrop-blur-3xl rounded-[40px] border border-[var(--sol-base01)]/20 shadow-2xl z-40 gap-8"
+      >
+        {tabs.map((tab) => {
       const isActive = activeTab === tab.id;
       return (
         <div 
@@ -49,5 +52,7 @@ export const DesktopSideNav = ({ avatarUrl, activeTab, onTabChange }: SideNavPro
         </div>
       );
     })}
-  </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 );

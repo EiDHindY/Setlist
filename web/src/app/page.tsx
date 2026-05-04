@@ -311,7 +311,7 @@ export default function HomePage() {
           />
 
           {/* Content Area */}
-          <main className="flex-1 md:ml-[100px] relative overflow-hidden">
+          <main className={`flex-1 relative overflow-hidden transition-all duration-300 ${!!selectedSong && activeTab === 1 ? '' : 'md:ml-[100px]'}`}>
             <AnimatePresence mode="wait">
               {renderContent()}
             </AnimatePresence>
