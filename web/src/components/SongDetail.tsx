@@ -221,6 +221,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
           )}
         </div>
 
+        </div>
+        
         {/* ── Bottom Nav ─────────────────────────────────────────── */}
         <div className="relative flex-shrink-0 z-10 w-full">
           <div className="glass-heavy border-t border-[var(--sol-cyan)]/20">
