@@ -57,7 +57,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         />
 
         {/* ── Top Bar ────────────────────────────────────────────── */}
-        <div className="relative flex items-center px-4 py-3 flex-shrink-0 z-10">
+        <div className="relative flex-1 flex flex-col w-full max-w-2xl mx-auto z-10 overflow-hidden">
+          <div className="flex items-center px-4 py-3 flex-shrink-0">
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -72,37 +73,37 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             COLLECTION
           </h2>
           <div className="w-9" /> {/* Spacer for alignment */}
-        </div>
-
-        {/* ── Song Header ────────────────────────────────────────── */}
-        <div className="relative px-5 pb-5 flex items-start gap-4 flex-shrink-0 z-10">
-          {/* Album Art */}
-          <div
-            className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] cursor-pointer transition-bounce hover:scale-105"
-            onClick={() => setArtworkExpanded(true)}
-          >
-            {song.albumArt ? (
-              <img src={song.albumArt} alt={song.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center">
-                <Music size={36} className="text-[var(--sol-base01)]" />
-              </div>
-            )}
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-[var(--sol-base3)] text-xl font-bold truncate font-[family-name:var(--font-montserrat)]">
-              {song.title}
-            </h1>
-            <p className="text-[var(--sol-base0)] text-sm mt-1 font-[family-name:var(--font-montserrat)]">
-              {song.artist}
-            </p>
-          </div>
-        </div>
+          {/* ── Song Header ────────────────────────────────────────── */}
+          <div className="px-5 pb-5 flex items-start gap-4 flex-shrink-0">
+            {/* Album Art */}
+            <div
+              className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] cursor-pointer transition-bounce hover:scale-105"
+              onClick={() => setArtworkExpanded(true)}
+            >
+              {song.albumArt ? (
+                <img src={song.albumArt} alt={song.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center">
+                  <Music size={36} className="text-[var(--sol-base01)]" />
+                </div>
+              )}
+            </div>
 
-        {/* ── Tab Content ────────────────────────────────────────── */}
-        <div className="relative flex-1 overflow-y-auto z-10">
+            {/* Info */}
+            <div className="flex-1 min-w-0 pt-1">
+              <h1 className="text-[var(--sol-base3)] text-xl font-bold truncate font-[family-name:var(--font-montserrat)]">
+                {song.title}
+              </h1>
+              <p className="text-[var(--sol-base0)] text-sm mt-1 font-[family-name:var(--font-montserrat)]">
+                {song.artist}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Tab Content ────────────────────────────────────────── */}
+          <div className="flex-1 overflow-y-auto relative px-2">
           {currentTab === 0 ? (
             // ── Versions List ──
             <div className="flex flex-col h-full">
@@ -221,9 +222,9 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         </div>
 
         {/* ── Bottom Nav ─────────────────────────────────────────── */}
-        <div className="relative flex-shrink-0 z-10">
+        <div className="relative flex-shrink-0 z-10 w-full">
           <div className="glass-heavy border-t border-[var(--sol-cyan)]/20">
-            <div className="flex items-center justify-around px-2 py-2">
+            <div className="flex items-center justify-around px-2 py-2 w-full max-w-2xl mx-auto">
               {TABS.map((tab) => {
                 const isActive = currentTab === tab.id;
                 const Icon = tab.icon;
