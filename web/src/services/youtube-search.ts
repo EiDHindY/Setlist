@@ -22,15 +22,7 @@ async function fetchITunesSuggestions(query: string): Promise<SearchSuggestion[]
   const lang = useArabic ? 'ar_eg' : 'en_us';
 
   try {
-    const params = new URLSearchParams({
-      term: query,
-      entity: 'song',
-      limit: '15',
-      country,
-      lang,
-    });
-
-    const response = await fetch(`https://itunes.apple.com/search?${params}`);
+    const response = await fetch(`/api/search/itunes?q=${encodeURIComponent(query)}`);
     if (!response.ok) return [];
 
     const data = await response.json();
@@ -135,16 +127,8 @@ export async function searchYouTube(
   query: string,
   maxResults = 10
 ): Promise<YouTubeSearchResult[]> {
-  const params = new URLSearchParams({
-    part: 'snippet',
-    q: query,
-    type: 'video',
-    maxResults: String(maxResults),
-    key: config.youtubeApiKey,
-  });
-
   try {
-    const response = await fetch(`${config.youtubeApiUrl}/search?${params}`);
+    const response = await fetch(`/api/search/youtube?action=search&q=${encodeURIComponent(query)}&maxResults=${maxResults}`);
     if (!response.ok) return [];
 
     const data = await response.json();
@@ -198,14 +182,8 @@ export async function searchYouTube(
  * Get video details by ID (for paste-a-link flow).
  */
 export async function getVideoDetails(videoId: string): Promise<YouTubeSearchResult | null> {
-  const params = new URLSearchParams({
-    part: 'snippet,contentDetails,statistics',
-    id: videoId,
-    key: config.youtubeApiKey,
-  });
-
   try {
-    const response = await fetch(`${config.youtubeApiUrl}/videos?${params}`);
+    const response = await fetch(`/api/search/youtube?action=videos&id=${videoId}`);
     if (!response.ok) return null;
 
     const data = await response.json();
@@ -241,14 +219,8 @@ export async function getVideoDetails(videoId: string): Promise<YouTubeSearchRes
 async function getVideoDetailsBulk(videoIds: string[]): Promise<Record<string, { duration: number, viewCount: number }>> {
   if (!videoIds.length) return {};
 
-  const params = new URLSearchParams({
-    part: 'contentDetails,statistics',
-    id: videoIds.join(','),
-    key: config.youtubeApiKey,
-  });
-
   try {
-    const response = await fetch(`${config.youtubeApiUrl}/videos?${params}`);
+    const response = await fetch(`/api/search/youtube?action=videos&id=${videoIds.join(',')}`);
     if (!response.ok) return {};
 
     const data = await response.json();
@@ -278,16 +250,8 @@ async function getVideoDetailsBulk(videoIds: string[]): Promise<Record<string, {
 async function getChannelDetailsBulk(channelIds: string[]): Promise<Record<string, string>> {
   if (!channelIds.length) return {};
 
-  // YouTube API limits bulk fetches to 50 IDs per request.
-  // We only ever request maxResults=10, so a single request is fine.
-  const params = new URLSearchParams({
-    part: 'snippet',
-    id: channelIds.join(','),
-    key: config.youtubeApiKey,
-  });
-
   try {
-    const response = await fetch(`${config.youtubeApiUrl}/channels?${params}`);
+    const response = await fetch(`/api/search/youtube?action=channels&id=${channelIds.join(',')}`);
     if (!response.ok) return {};
 
     const data = await response.json();

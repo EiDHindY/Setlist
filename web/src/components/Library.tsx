@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Music, Trash2, MoreVertical, ChevronRight, Loader2, RefreshCw, Mic2, Disc3, BarChart3, Layers } from 'lucide-react';
 import type { Song } from '@/types/song';
 import { supabase } from '@/utils/supabase';
-import { fetchLibrarySongs, removeSongFromLibrary } from '@/services/library';
+import { useLibraryStore } from '@/store/libraryStore';
 import { collectionSubTabs } from '@/components/navigation/nav-config';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
@@ -24,8 +24,9 @@ interface LibraryProps {
 }
 
 export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSubTabChange, userId }: LibraryProps) {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { songs, isLoaded, isSyncing, fetchLibrary, removeSong } = useLibraryStore();
+  
+  // No longer tracking local loading state for initial render if cached
   const [refreshing, setRefreshing] = useState(false);
   const [deletingSongId, setDeletingSongId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -56,13 +57,12 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
     if (!userId) return;
 
     if (showRefresh) setRefreshing(true);
-    else setLoading(true);
 
-    const result = await fetchLibrarySongs(userId);
-    setSongs(result);
-    setLoading(false);
-    setRefreshing(false);
-  }, [userId]);
+    // If showRefresh is true, we force a sync
+    await fetchLibrary(userId, showRefresh);
+    
+    if (showRefresh) setRefreshing(false);
+  }, [userId, fetchLibrary]);
 
   useEffect(() => {
     loadSongs();
@@ -72,16 +72,13 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
     if (!userId) return;
 
     setDeletingSongId(songId);
-    const success = await removeSongFromLibrary(userId, songId);
-    if (success) {
-      setSongs((prev) => prev.filter((s) => s.id !== songId));
-    }
+    await removeSong(userId, songId);
     setDeletingSongId(null);
     setMenuOpenId(null);
   };
 
   // ── Empty State ───────────────────────────────────────────────────
-  if (!loading && songs.length === 0) {
+  if (isLoaded && songs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full px-10">
         <div className="w-28 h-28 rounded-full flex items-center justify-center border border-[var(--sol-base01)]/20 bg-[var(--sol-base02)]/50 mb-8">
@@ -200,7 +197,7 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
       </div>
 
       {/* ── Song List + Sidebar ──────────────────────────────────── */}
-      {loading ? (
+      {!isLoaded && isSyncing ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 size={40} className="text-[var(--sol-cyan)] animate-spin" />
         </div>
