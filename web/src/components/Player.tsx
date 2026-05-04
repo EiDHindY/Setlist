@@ -198,8 +198,8 @@ export default function Player() {
         <motion.div
           drag
           dragConstraints={constraintsRef}
-          dragElastic={0.1}
-          dragMomentum={false}
+          dragElastic={0.2}
+          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
           onDragStart={() => {
             isDragging.current = true;
           }}
