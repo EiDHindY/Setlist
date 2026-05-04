@@ -167,12 +167,19 @@ export default function Player() {
             onClick={toggleExpand}
             className="fixed inset-0 z-50 bg-[#002b36]/90 backdrop-blur-md flex flex-col"
           >
-            <div className="p-6 flex justify-between items-center">
-              <div>
+            <div className="p-6 flex justify-between items-center pointer-events-none">
+              <div className="pointer-events-auto">
                 <h2 className="text-white font-bold text-xl">{song.title}</h2>
                 <p className="text-[var(--sol-cyan)]">{song.artist}</p>
               </div>
-              <button onClick={toggleExpand} className="p-3 bg-white/10 rounded-full text-white">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpand();
+                }} 
+                className="p-3 bg-white/10 rounded-full text-white cursor-pointer hover:bg-white/20 hover:scale-110 active:scale-95 transition-all pointer-events-auto"
+                aria-label="Collapse Player"
+              >
                 <Minimize2 size={24} />
               </button>
             </div>
