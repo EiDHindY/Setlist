@@ -77,7 +77,6 @@ export default function Player() {
           rel: 0,
           playsinline: 1,
           controls: 1,
-          showinfo: 0,
         },
         events: {
           onReady: () => {
