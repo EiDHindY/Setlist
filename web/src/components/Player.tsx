@@ -15,6 +15,7 @@ export default function Player() {
   const { state, stop, togglePlayPause, setPlaying, toggleExpand } = usePlayback();
   const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const constraintsRef = useRef<HTMLDivElement | null>(null);
   const [isReady, setIsReady] = useState(false);
   const apiReady = useRef(false);
   const creatingPlayer = useRef(false);
@@ -146,6 +147,10 @@ export default function Player() {
 
   return (
     <>
+      {/* ── DRAG CONSTRAINTS ── */}
+      {/* This invisible full-screen div tells the draggable player where its boundaries are */}
+      <div ref={constraintsRef} className="fixed inset-4 pointer-events-none z-0" />
+
       {/* ── GLOBAL PLAYER CONTAINER ── */}
       {/* This div stays in the same place to prevent iframe reload, we move it with CSS */}
       <div 
@@ -190,22 +195,26 @@ export default function Player() {
       {/* ── Mini Player Bar ── */}
       {!isExpanded && (
         <motion.div
+          drag
+          dragConstraints={constraintsRef}
+          dragElastic={0.1}
+          dragMomentum={false}
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-[70] px-4 pb-6 pointer-events-none"
+          className="fixed bottom-6 left-4 md:left-6 right-4 md:right-auto md:w-80 z-[70] pointer-events-none"
         >
           <div 
-            className="glass-heavy h-20 rounded-[28px] flex items-center gap-4 px-4 shadow-2xl pointer-events-auto border border-white/5"
+            className="glass-heavy h-20 md:h-24 rounded-2xl md:rounded-[24px] flex items-center gap-4 p-3 shadow-2xl pointer-events-auto border border-[var(--sol-base01)]/20 cursor-grab active:cursor-grabbing hover:border-[var(--sol-cyan)]/30 transition-colors"
             style={{ background: 'rgba(7, 54, 66, 0.85)' }}
           >
             {/* Thumbnail / Visualizer */}
             <div 
-              className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 relative group cursor-pointer"
+              className="w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 relative group cursor-pointer"
               onClick={toggleExpand}
             >
               <img src={thumbnailUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 {isPlaying ? (
                   <div className="flex gap-0.5 items-end h-4">
                     {[0, 1, 2].map(i => (
@@ -224,17 +233,35 @@ export default function Player() {
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0 cursor-pointer" onClick={toggleExpand}>
-              <p className="text-white text-sm font-bold truncate">{song.title}</p>
-              <p className="text-[var(--sol-cyan)] text-[11px] truncate opacity-80">{version.channelName || 'YouTube'}</p>
+            <div className="flex-1 min-w-0 cursor-pointer flex flex-col justify-center h-full" onClick={toggleExpand}>
+              <p className="text-white text-sm md:text-base font-bold truncate">{song.title}</p>
+              <p className="text-[var(--sol-cyan)] text-[11px] md:text-xs truncate opacity-80 mb-1">{version.channelName || 'YouTube'}</p>
+              <div className="hidden md:flex items-center gap-2 mt-1">
+                 <div className="flex-1 h-1 bg-black/40 rounded-full overflow-hidden">
+                    {isPlaying && (
+                      <motion.div 
+                        className="h-full bg-[var(--sol-cyan)]"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: version.duration || 180, ease: "linear", repeat: Infinity }}
+                      />
+                    )}
+                 </div>
+              </div>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-1">
-              <button onClick={handleTogglePlay} className="p-3 rounded-full hover:bg-white/5 transition-all active:scale-90">
+            <div className="flex items-center gap-1 md:gap-2">
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }} 
+                className="p-3 md:p-4 rounded-full hover:bg-white/10 transition-all active:scale-90"
+              >
                 {isPlaying ? <Pause size={24} className="text-white fill-white" /> : <Play size={24} className="text-white fill-white" />}
               </button>
-              <button onClick={() => { hapticTap(); stop(); }} className="p-3 rounded-full hover:bg-white/5 text-[#586e75]">
+              <button 
+                onClick={(e) => { e.stopPropagation(); hapticTap(); stop(); }} 
+                className="p-2 md:p-3 rounded-full hover:bg-white/10 text-[var(--sol-base01)] transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Player Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --sol-base03: #002b36;
+      --sol-base02: #073642;
+      --sol-base01: #586e75;
+      --sol-base0: #839496;
+      --sol-base2: #eee8d5;
+      --sol-base3: #fdf6e3;
+      --sol-cyan: #2aa198;
+    }
+    body {
+      background-color: var(--sol-base03);
+      color: var(--sol-base0);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .glass {
+      background: rgba(7, 54, 66, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(88, 110, 117, 0.2);
+    }
+    
+    /* Simulate the split view background just to provide context */
+    .mock-app-bg {
+      background-image: linear-gradient(to right, var(--sol-base03) 50%, rgba(7, 54, 66, 0.3) 50%);
+    }
+  </style>
+</head>
+<body class="p-8 pb-32">
+
+  <div class="max-w-6xl mx-auto space-y-24">
+
+    <!-- Title -->
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-[var(--sol-base3)]">Desktop Mini-Player Layouts</h1>
+      <p class="text-[var(--sol-cyan)] mt-2">Pick the style that feels best for the persistent player</p>
+    </div>
+
+    <!-- OPTION 1: The Centered Pill -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option 1</span>
+        The Centered Pill (Apple Music / Dynamic Island Style)
+      </h2>
+      <p class="mb-6 text-sm">A compact, pill-shaped player floating elegantly in the bottom center of the screen.</p>
+      
+      <div class="w-full h-[400px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative mock-app-bg shadow-2xl">
+        <!-- Floating Player -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xl z-50">
+          <div class="glass h-20 rounded-[28px] flex items-center gap-4 px-4 shadow-2xl hover:scale-[1.02] transition-transform cursor-pointer">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--sol-base03)] flex-shrink-0 flex items-center justify-center border border-[var(--sol-base01)]/30">🎵</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-sm font-bold truncate">God Complex</p>
+              <p class="text-[var(--sol-cyan)] text-[11px] truncate opacity-80">Bleed From Within - Topic</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white">◁</button>
+              <button class="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xl">||</button>
+              <button class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white">▷</button>
+              <button class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-[var(--sol-base01)] ml-2">✖</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 2: The Floating Widget (Bottom Right) -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option 2</span>
+        The Floating Widget (Bottom Right)
+      </h2>
+      <p class="mb-6 text-sm">Tucked away in the corner like a picture-in-picture video player. Never obscures the main content.</p>
+      
+      <div class="w-full h-[400px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative mock-app-bg shadow-2xl">
+        <!-- Floating Player -->
+        <div class="absolute bottom-8 right-8 w-80 z-50">
+          <div class="glass rounded-2xl p-4 shadow-2xl hover:scale-[1.02] transition-transform cursor-pointer flex flex-col gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-xl bg-[var(--sol-base03)] flex-shrink-0 flex items-center justify-center border border-[var(--sol-base01)]/30">🎵</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-white text-base font-bold truncate">God Complex</p>
+                <p class="text-[var(--sol-cyan)] text-xs truncate opacity-80">Bleed From Within</p>
+              </div>
+              <button class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-[var(--sol-base01)] -mt-8 -mr-2">✖</button>
+            </div>
+            <!-- Progress Bar Mock -->
+            <div class="w-full h-1 bg-black/30 rounded-full overflow-hidden">
+               <div class="w-1/3 h-full bg-[var(--sol-cyan)]"></div>
+            </div>
+            <!-- Controls -->
+            <div class="flex items-center justify-center gap-4">
+              <button class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white">◁</button>
+              <button class="w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white text-xl">||</button>
+              <button class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white">▷</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 3: The Contained Bar (Bottom Center) -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option 3</span>
+        The Contained Bar
+      </h2>
+      <p class="mb-6 text-sm">Similar to what you have now, but constrained to a maximum width so it doesn't stretch awkwardly across wide screens.</p>
+      
+      <div class="w-full h-[400px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative mock-app-bg shadow-2xl flex justify-center">
+        <!-- Floating Player -->
+        <div class="absolute bottom-6 w-full max-w-4xl px-4 z-50">
+          <div class="glass h-20 rounded-[24px] flex items-center gap-4 px-4 shadow-2xl hover:border-[var(--sol-cyan)]/30 transition-colors cursor-pointer border border-[var(--sol-cyan)]/10">
+            <div class="w-14 h-14 rounded-xl bg-[var(--sol-base03)] flex-shrink-0 flex items-center justify-center">🎵</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-sm font-bold truncate">God Complex</p>
+              <p class="text-[var(--sol-cyan)] text-[11px] truncate opacity-80">Bleed From Within - Topic</p>
+            </div>
+            <div class="flex items-center gap-2 pr-2">
+              <button class="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xl">▶</button>
+              <button class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-[var(--sol-base01)]">✖</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 4: Left Side Dock -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option 4</span>
+        The Side Dock (Bottom Left)
+      </h2>
+      <p class="mb-6 text-sm">Anchored to the left side, sitting perfectly under the navigation menu. Creates a unified "Sidebar" feel.</p>
+      
+      <div class="w-full h-[400px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative mock-app-bg shadow-2xl">
+        <!-- Left Nav Mock -->
+        <div class="absolute left-0 top-0 bottom-0 w-24 border-r border-[var(--sol-base01)]/20 bg-[var(--sol-base03)]/50"></div>
+        
+        <!-- Floating Player -->
+        <div class="absolute bottom-6 left-6 z-50">
+          <div class="glass h-24 rounded-2xl flex items-center gap-4 p-3 shadow-2xl hover:scale-[1.02] transition-transform cursor-pointer border border-[var(--sol-base01)]/20 w-72">
+            <div class="w-16 h-16 rounded-xl bg-[var(--sol-base03)] flex-shrink-0 flex items-center justify-center">🎵</div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <p class="text-white text-sm font-bold truncate">God Complex</p>
+              <p class="text-[var(--sol-cyan)] text-[11px] truncate opacity-80 mb-2">Bleed From Within</p>
+              <div class="flex items-center gap-3">
+                 <button class="text-white hover:text-[var(--sol-cyan)] transition-colors">▶</button>
+                 <div class="flex-1 h-1 bg-black/40 rounded-full"><div class="w-1/2 h-full bg-[var(--sol-cyan)]"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>
