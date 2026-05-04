@@ -5,6 +5,9 @@ import { useEffect, useRef } from 'react';
 // Global counter to track the sequence of modal states
 let globalStateId = 0;
 
+// Global flag to prevent programmatic history pops from triggering other listeners
+let isProgrammaticBack = false;
+
 /**
  * Hook to manage mobile hardware back button/swipe back gesture.
  * When `isOpen` is true, pushes a state to history.
@@ -33,6 +36,11 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
     window.history.pushState({ ...window.history.state, modalId, id: currentId }, '');
 
     const handlePopState = (e: PopStateEvent) => {
+      if (isProgrammaticBack) {
+        // Ignore this popstate because we triggered it programmatically via UI close
+        return;
+      }
+
       // If the state we landed on has a lower ID, it means we went back.
       // (or if it has no id, meaning we went back to a base page without our custom state)
       const incomingId = e.state?.id || 0;
@@ -54,9 +62,14 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
       // If the component is unmounting or isOpen became false via the UI,
       // and the browser history state is still exactly our state,
       // we need to pop it so the history remains clean.
-      // We check the exact ID to ensure we don't pop someone else's state.
       if (window.history.state?.id === currentId) {
+        isProgrammaticBack = true;
         window.history.back();
+        
+        // Reset the flag after the popstate has been processed
+        setTimeout(() => {
+          isProgrammaticBack = false;
+        }, 150);
       }
     };
   }, [isOpen, modalId]);
