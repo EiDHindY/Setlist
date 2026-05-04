@@ -2,11 +2,11 @@
 
 // ── YOUTUBE PLAYER ──────────────────────────────────────────────────
 // Native <iframe> + YouTube IFrame API.
-// One single player <div> that gets reparented between mini and expanded views.
+// Optimized to handle reparenting and playback sync.
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Play, Pause, Maximize2, Minimize2, Music2, Loader2 } from 'lucide-react';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import { useMediaSession, useWakeLock, hapticTap } from '@/hooks/useNative';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
@@ -14,82 +14,60 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 export default function Player() {
   const { state, stop, togglePlayPause, setPlaying, toggleExpand } = usePlayback();
   const playerRef = useRef<YT.Player | null>(null);
-  const playerDivRef = useRef<HTMLDivElement | null>(null);
-  const expandedSlotRef = useRef<HTMLDivElement>(null);
-  const miniSlotRef = useRef<HTMLDivElement>(null);
+  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isReady, setIsReady] = useState(false);
   const apiReady = useRef(false);
+  const creatingPlayer = useRef(false);
 
   const { song, version, isPlaying, isExpanded } = state;
 
   useHardwareBack(isExpanded, () => toggleExpand(), 'player_expanded');
 
-  // Load YouTube IFrame API once
+  // 1. Load YouTube IFrame API
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (window.YT?.Player) { apiReady.current = true; return; }
+    if (window.YT?.Player) {
+      apiReady.current = true;
+      return;
+    }
+
+    // Check if script already exists
     if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return;
 
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
-    const prev = (window as unknown as Record<string, unknown>).onYouTubeIframeAPIReady as (() => void) | undefined;
-    (window as unknown as Record<string, unknown>).onYouTubeIframeAPIReady = () => {
+    (window as any).onYouTubeIframeAPIReady = () => {
       apiReady.current = true;
-      prev?.();
     };
   }, []);
 
-  // Create persistent player div (once)
+  // 2. Initialize Player when version changes
   useEffect(() => {
-    if (!playerDivRef.current) {
-      const div = document.createElement('div');
-      div.style.width = '100%';
-      div.style.height = '100%';
-      playerDivRef.current = div;
-    }
-  }, []);
-
-  // Reparent player div between mini and expanded slots
-  useEffect(() => {
-    const div = playerDivRef.current;
-    if (!div || !version) return;
-
-    const targetSlot = isExpanded ? expandedSlotRef.current : miniSlotRef.current;
-    if (targetSlot && div.parentElement !== targetSlot) {
-      targetSlot.appendChild(div);
-    }
-  }, [isExpanded, version]);
-
-  // Create/update YT player when version changes
-  useEffect(() => {
-    if (!version) {
+    if (!version || !version.youtubeVideoId) {
       playerRef.current?.destroy();
       playerRef.current = null;
+      setIsReady(false);
       return;
     }
 
-    const createPlayer = () => {
-      const div = playerDivRef.current;
-      if (!div) return;
+    const initPlayer = () => {
+      if (creatingPlayer.current) return;
+      creatingPlayer.current = true;
 
-      // Destroy previous player
+      // Clean up existing
       playerRef.current?.destroy();
-      playerRef.current = null;
-      div.innerHTML = '';
-
-      // Create inner element for YT API
-      const innerDiv = document.createElement('div');
-      innerDiv.id = `yt-inner-${Date.now()}`;
-      div.appendChild(innerDiv);
-
-      // Place in correct slot before creating player
-      const targetSlot = isExpanded ? expandedSlotRef.current : miniSlotRef.current;
-      if (targetSlot && div.parentElement !== targetSlot) {
-        targetSlot.appendChild(div);
+      
+      const container = document.getElementById('yt-player-root');
+      if (!container) {
+        creatingPlayer.current = false;
+        return;
       }
+      container.innerHTML = '<div id="yt-iframe-placeholder"></div>';
 
-      playerRef.current = new YT.Player(innerDiv.id, {
+      playerRef.current = new YT.Player('yt-iframe-placeholder', {
         videoId: version.youtubeVideoId,
         width: '100%',
         height: '100%',
@@ -99,8 +77,14 @@ export default function Player() {
           rel: 0,
           playsinline: 1,
           controls: 1,
+          showinfo: 0,
         },
         events: {
+          onReady: () => {
+            setIsReady(true);
+            creatingPlayer.current = false;
+            if (isPlaying) playerRef.current?.playVideo();
+          },
           onStateChange: (event: YT.OnStateChangeEvent) => {
             if (event.data === YT.PlayerState.PLAYING) setPlaying(true);
             else if (event.data === YT.PlayerState.PAUSED) setPlaying(false);
@@ -111,34 +95,30 @@ export default function Player() {
     };
 
     if (apiReady.current) {
-      createPlayer();
+      initPlayer();
     } else {
-      const checkInterval = setInterval(() => {
-        if (window.YT?.Player) {
-          apiReady.current = true;
-          clearInterval(checkInterval);
-          createPlayer();
+      const interval = setInterval(() => {
+        if (apiReady.current) {
+          clearInterval(interval);
+          initPlayer();
         }
       }, 200);
-      return () => clearInterval(checkInterval);
+      return () => clearInterval(interval);
     }
+  }, [version?.youtubeVideoId]);
 
-    return () => {
-      playerRef.current?.destroy();
-      playerRef.current = null;
-    };
-  }, [version?.youtubeVideoId, setPlaying]);
-
-  // Sync play/pause
+  // 3. Sync Play/Pause state
   useEffect(() => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !isReady) return;
     try {
       if (isPlaying) playerRef.current.playVideo();
       else playerRef.current.pauseVideo();
-    } catch { /* Player not ready */ }
-  }, [isPlaying]);
+    } catch (e) {
+      console.warn('Player sync error:', e);
+    }
+  }, [isPlaying, isReady]);
 
-  // ── NATIVE: Media Session (Lock Screen Controls) ──────────────────
+  // ── NATIVE: Media Session ──────────────────────────────────────────
   useMediaSession(
     song && version
       ? {
@@ -153,7 +133,6 @@ export default function Player() {
       : null
   );
 
-  // ── NATIVE: Screen Wake Lock (Keep Screen On While Playing) ───────
   useWakeLock(isPlaying);
 
   const handleTogglePlay = useCallback(() => {
@@ -168,43 +147,36 @@ export default function Player() {
 
   return (
     <>
-      {/* ── Expanded Fullscreen View ── */}
+      {/* ── GLOBAL PLAYER CONTAINER ── */}
+      {/* This div stays in the same place to prevent iframe reload, we move it with CSS */}
+      <div 
+        id="yt-player-root"
+        className={`fixed transition-all duration-500 ease-in-out z-[60] overflow-hidden rounded-2xl shadow-2xl bg-black ${
+          isExpanded 
+            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] aspect-video max-w-4xl' 
+            : 'bottom-24 left-4 w-0 h-0 opacity-0 pointer-events-none'
+        }`}
+      />
+
+      {/* ── Expanded Backdrop ── */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-black flex flex-col"
+            onClick={toggleExpand}
+            className="fixed inset-0 z-50 bg-[#002b36]/90 backdrop-blur-md flex flex-col"
           >
-            {/* Top bar */}
-            <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-white font-bold text-lg truncate font-[family-name:var(--font-outfit)]">
-                  {song.title}
-                </span>
-                <span className="text-[var(--sol-cyan)] text-sm flex-shrink-0 font-[family-name:var(--font-montserrat)]">
-                  {song.artist}
-                </span>
+            <div className="p-6 flex justify-between items-center">
+              <div>
+                <h2 className="text-white font-bold text-xl">{song.title}</h2>
+                <p className="text-[var(--sol-cyan)]">{song.artist}</p>
               </div>
-              <button
-                onClick={toggleExpand}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
-              >
-                <Minimize2 size={22} className="text-white" />
+              <button onClick={toggleExpand} className="p-3 bg-white/10 rounded-full text-white">
+                <Minimize2 size={24} />
               </button>
             </div>
-
-            {/* Player slot (expanded) */}
-            <div className="flex-1 flex items-center justify-center px-4">
-              <div
-                ref={expandedSlotRef}
-                className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black"
-              />
-            </div>
-
-            <div className="h-8 flex-shrink-0" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -215,54 +187,51 @@ export default function Player() {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-40"
+          className="fixed bottom-0 left-0 right-0 z-[70] px-4 pb-6 pointer-events-none"
         >
-          {/* Offscreen slot for iframe when minimized (audio keeps playing) */}
-          <div
-            ref={miniSlotRef}
-            className="fixed -left-[9999px] w-[320px] h-[180px] overflow-hidden"
-          />
-
-          <div
-            className="glass-heavy h-20 mx-4 mb-4 rounded-2xl flex items-center gap-4 px-4 shadow-[0_-4px_30px_rgba(0,0,0,0.3)]"
-            style={{ borderTop: '1px solid rgba(42, 161, 152, 0.3)' }}
+          <div 
+            className="glass-heavy h-20 rounded-[28px] flex items-center gap-4 px-4 shadow-2xl pointer-events-auto border border-white/5"
+            style={{ background: 'rgba(7, 54, 66, 0.85)' }}
           >
-            {/* Thumbnail */}
-            <div
-              className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer transition-bounce hover:scale-105"
+            {/* Thumbnail / Visualizer */}
+            <div 
+              className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 relative group cursor-pointer"
               onClick={toggleExpand}
             >
-              <img src={thumbnailUrl} alt={version.title} className="w-full h-full object-cover" />
+              <img src={thumbnailUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                {isPlaying ? (
+                  <div className="flex gap-0.5 items-end h-4">
+                    {[0, 1, 2].map(i => (
+                      <motion.div
+                        key={i}
+                        animate={{ height: [4, 12, 6, 14, 4] }}
+                        transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.2 }}
+                        className="w-1 bg-[var(--sol-cyan)] rounded-full"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Play size={16} className="text-white fill-white" />
+                )}
+              </div>
             </div>
 
-            {/* Song info */}
+            {/* Info */}
             <div className="flex-1 min-w-0 cursor-pointer" onClick={toggleExpand}>
-              <p className="text-[var(--sol-base3)] text-sm font-bold truncate font-[family-name:var(--font-montserrat)]">
-                {song.title}
-              </p>
-              <p className="text-[var(--sol-cyan)] text-xs truncate font-[family-name:var(--font-montserrat)]">
-                {version.title}
-              </p>
+              <p className="text-white text-sm font-bold truncate">{song.title}</p>
+              <p className="text-[var(--sol-cyan)] text-[11px] truncate opacity-80">{version.channelName || 'YouTube'}</p>
             </div>
 
-            {/* Expand */}
-            <button onClick={toggleExpand} className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
-              <Maximize2 size={18} className="text-[var(--sol-base1)]" />
-            </button>
-
-            {/* Play/Pause */}
-            <button onClick={handleTogglePlay} className="p-2 rounded-full hover:bg-white/10 transition-bounce hover:scale-110 active:scale-95 cursor-pointer">
-              {isPlaying
-                ? <Pause size={24} className="text-[var(--sol-base3)]" fill="currentColor" />
-                : <Play size={24} className="text-[var(--sol-base3)]" fill="currentColor" />
-              }
-            </button>
-
-            {/* Close */}
-            <button onClick={() => { hapticTap(); stop(); }} className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
-              <X size={18} className="text-[var(--sol-base01)]" />
-            </button>
+            {/* Controls */}
+            <div className="flex items-center gap-1">
+              <button onClick={handleTogglePlay} className="p-3 rounded-full hover:bg-white/5 transition-all active:scale-90">
+                {isPlaying ? <Pause size={24} className="text-white fill-white" /> : <Play size={24} className="text-white fill-white" />}
+              </button>
+              <button onClick={() => { hapticTap(); stop(); }} className="p-3 rounded-full hover:bg-white/5 text-[#586e75]">
+                <X size={20} />
+              </button>
+            </div>
           </div>
         </motion.div>
       )}

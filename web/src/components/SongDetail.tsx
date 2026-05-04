@@ -156,11 +156,19 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                             onClick={() => handlePlayVersion(version)}
                             className="flex flex-col items-center gap-1 cursor-pointer transition-bounce hover:scale-110 active:scale-95"
                           >
-                            <Play
-                              size={28}
-                              className={isCurrentlyPlaying ? 'text-[var(--sol-cyan)]' : 'text-[var(--sol-cyan)]'}
-                              fill="currentColor"
-                            />
+                            {isCurrentlyPlaying && state.isPlaying ? (
+                              <Pause
+                                size={28}
+                                className="text-[var(--sol-cyan)]"
+                                fill="currentColor"
+                              />
+                            ) : (
+                              <Play
+                                size={28}
+                                className="text-[var(--sol-cyan)]"
+                                fill="currentColor"
+                              />
+                            )}
                             <span className="text-[var(--sol-cyan)]/80 text-[10px] font-[family-name:var(--font-montserrat)]">
                               {formatDuration(version.duration)}
                             </span>
