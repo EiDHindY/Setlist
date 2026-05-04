@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, PlusCircle, Play, Music, Disc3, Mic2,
+  ArrowLeft, PlusCircle, Play, Pause, Music, Disc3, Mic2,
   Users, BarChart3, ListMusic, User
 } from 'lucide-react';
 import type { Song, SongVersion } from '@/types/song';
