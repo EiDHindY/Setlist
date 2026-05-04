@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Detail Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --sol-base03: #002b36;
+      --sol-base02: #073642;
+      --sol-base01: #586e75;
+      --sol-base0: #839496;
+      --sol-base2: #eee8d5;
+      --sol-base3: #fdf6e3;
+      --sol-cyan: #2aa198;
+    }
+    body {
+      background-color: var(--sol-base03);
+      color: var(--sol-base0);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .glass {
+      background: rgba(7, 54, 66, 0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(88, 110, 117, 0.2);
+    }
+  </style>
+</head>
+<body class="p-8 pb-32">
+
+  <div class="max-w-6xl mx-auto space-y-24">
+
+    <!-- Title -->
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-[var(--sol-base3)]">Desktop Song Detail Layouts</h1>
+      <p class="text-[var(--sol-cyan)] mt-2">Pick the style that feels best for Setlist on large screens</p>
+    </div>
+
+    <!-- OPTION A: Centered Column (Current) -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option A</span>
+        The Centered Column (The fix I just applied)
+      </h2>
+      <p class="mb-6 text-sm">Focused, mobile-like list constrained to the center. Best for quick interactions. This is what you see now locally.</p>
+      
+      <div class="w-full h-[600px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative bg-[var(--sol-base03)] shadow-2xl flex justify-center">
+        <!-- Container -->
+        <div class="w-full max-w-2xl h-full flex flex-col border-x border-[var(--sol-base01)]/20 relative">
+          <!-- Header -->
+          <div class="p-6 flex gap-6 items-start shrink-0">
+            <div class="w-24 h-24 bg-[var(--sol-base02)] rounded-xl shadow-lg border border-[var(--sol-cyan)]/20"></div>
+            <div class="mt-2">
+              <h3 class="text-2xl font-bold text-[var(--sol-base3)]">God Complex</h3>
+              <p class="text-[var(--sol-base0)]">Bleed From Within</p>
+            </div>
+          </div>
+          <!-- List -->
+          <div class="flex-1 px-6 space-y-3 overflow-hidden">
+            <div class="h-16 rounded-xl glass flex items-center px-4 gap-4 border-[var(--sol-cyan)]/30">
+              <div class="w-16 h-10 bg-[var(--sol-base03)] rounded-md border border-[var(--sol-base01)]/30"></div>
+              <div class="flex-1">
+                <div class="h-4 w-3/4 bg-[var(--sol-base01)]/30 rounded mb-2"></div>
+                <div class="h-3 w-1/2 bg-[var(--sol-base01)]/20 rounded"></div>
+              </div>
+            </div>
+            <div class="h-16 rounded-xl bg-[var(--sol-base02)]/30 border border-transparent flex items-center px-4 gap-4">
+              <div class="w-16 h-10 bg-[var(--sol-base03)] rounded-md border border-[var(--sol-base01)]/30"></div>
+              <div class="flex-1">
+                <div class="h-4 w-2/3 bg-[var(--sol-base01)]/30 rounded mb-2"></div>
+                <div class="h-3 w-1/3 bg-[var(--sol-base01)]/20 rounded"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Bottom Bar -->
+          <div class="h-16 glass border-t border-[var(--sol-cyan)]/20 flex items-center justify-around">
+            <div class="w-8 h-8 rounded-full bg-[var(--sol-cyan)]/20"></div>
+            <div class="w-8 h-8 rounded-full bg-[var(--sol-base01)]/20"></div>
+            <div class="w-8 h-8 rounded-full bg-[var(--sol-base01)]/20"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION B: Split View (Side-by-Side) -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option B</span>
+        The Split View (Modern Desktop)
+      </h2>
+      <p class="mb-6 text-sm">Takes advantage of desktop width. Massive album art and controls on the left, scrollable versions and tabs on the right.</p>
+      
+      <div class="w-full h-[600px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative bg-[var(--sol-base03)] shadow-2xl flex">
+        <!-- Left: Huge Art & Controls -->
+        <div class="w-1/2 h-full flex flex-col items-center justify-center p-12 border-r border-[var(--sol-base01)]/20 relative">
+          <div class="absolute inset-0 bg-gradient-to-br from-[var(--sol-cyan)]/10 to-transparent pointer-events-none"></div>
+          <div class="w-64 h-64 bg-[var(--sol-base02)] rounded-2xl shadow-2xl mb-8 border border-[var(--sol-base01)]/30"></div>
+          <h3 class="text-4xl font-bold text-[var(--sol-base3)] mb-2 text-center">God Complex</h3>
+          <p class="text-[var(--sol-base0)] text-xl text-center mb-10">Bleed From Within</p>
+          
+          <div class="flex gap-8 items-center">
+             <div class="w-12 h-12 rounded-full bg-[var(--sol-base01)]/20 flex items-center justify-center">◁</div>
+             <div class="w-16 h-16 rounded-full bg-[var(--sol-cyan)] shadow-[0_0_20px_rgba(42,161,152,0.4)] flex items-center justify-center text-[var(--sol-base03)] font-bold text-2xl">||</div>
+             <div class="w-12 h-12 rounded-full bg-[var(--sol-base01)]/20 flex items-center justify-center">▷</div>
+          </div>
+        </div>
+        <!-- Right: List -->
+        <div class="w-1/2 h-full flex flex-col bg-[var(--sol-base02)]/10">
+           <div class="p-6 pb-2 border-b border-[var(--sol-base01)]/20 shrink-0 flex justify-between items-center">
+             <div class="flex gap-6 text-[var(--sol-base01)] font-bold text-sm">
+                <span class="text-[var(--sol-cyan)] border-b-2 border-[var(--sol-cyan)] pb-2">VERSIONS</span>
+                <span>LYRICS</span>
+                <span>STATS</span>
+             </div>
+             <button class="px-4 py-2 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] rounded-full text-xs font-bold border border-[var(--sol-cyan)]/30 hover:scale-105 transition-transform">+ ADD</button>
+           </div>
+           <div class="flex-1 p-6 space-y-3 overflow-y-auto">
+            <div class="h-16 rounded-xl glass flex items-center px-4 gap-4 border-[var(--sol-cyan)]/30">
+              <div class="w-16 h-10 bg-[var(--sol-base03)] rounded-md border border-[var(--sol-base01)]/30"></div>
+              <div class="flex-1">
+                <div class="h-4 w-3/4 bg-[var(--sol-base01)]/40 rounded mb-2"></div>
+                <div class="h-3 w-1/3 bg-[var(--sol-base01)]/30 rounded"></div>
+              </div>
+            </div>
+            <div class="h-16 rounded-xl bg-[var(--sol-base02)]/30 flex items-center px-4 gap-4 border border-transparent hover:border-[var(--sol-base01)]/30 transition-colors">
+              <div class="w-16 h-10 bg-[var(--sol-base03)] rounded-md border border-[var(--sol-base01)]/30"></div>
+              <div class="flex-1">
+                <div class="h-4 w-1/2 bg-[var(--sol-base01)]/30 rounded mb-2"></div>
+              </div>
+            </div>
+            <div class="h-16 rounded-xl bg-[var(--sol-base02)]/30 flex items-center px-4 gap-4 border border-transparent hover:border-[var(--sol-base01)]/30 transition-colors">
+              <div class="w-16 h-10 bg-[var(--sol-base03)] rounded-md border border-[var(--sol-base01)]/30"></div>
+              <div class="flex-1">
+                <div class="h-4 w-2/3 bg-[var(--sol-base01)]/30 rounded mb-2"></div>
+              </div>
+            </div>
+           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION C: Hero Banner (Apple Music Style) -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <span class="bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-2 py-1 rounded-md text-sm">Option C</span>
+        The Hero Banner (Apple Music Style)
+      </h2>
+      <p class="mb-6 text-sm">A massive header spanning the width, with content contained below it. Feels very premium and cinematic.</p>
+      
+      <div class="w-full h-[600px] border border-[var(--sol-base01)] rounded-2xl overflow-hidden relative bg-[var(--sol-base03)] shadow-2xl flex flex-col">
+        <!-- Hero Header -->
+        <div class="h-64 shrink-0 bg-[var(--sol-base02)] relative flex items-end p-8 border-b border-[var(--sol-base01)]/20">
+          <div class="absolute inset-0 bg-gradient-to-t from-[var(--sol-base03)] via-transparent to-transparent"></div>
+          <div class="relative z-10 flex gap-8 items-end">
+             <div class="w-40 h-40 bg-[var(--sol-base03)] rounded-2xl shadow-2xl border border-[var(--sol-base01)]/30"></div>
+             <div class="pb-2">
+                <p class="text-[var(--sol-cyan)] text-xs font-bold tracking-[3px] mb-2">COLLECTION</p>
+                <h3 class="text-5xl font-bold text-[var(--sol-base3)] mb-3">God Complex</h3>
+                <p class="text-[var(--sol-base0)] text-xl flex items-center gap-3">
+                   <span class="w-6 h-6 rounded-full bg-[var(--sol-base01)]/30 inline-block"></span> Bleed From Within
+                </p>
+             </div>
+          </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="flex-1 flex w-full">
+           <div class="flex-1 p-8 overflow-y-auto">
+              <div class="flex items-center justify-between mb-6">
+                 <h4 class="font-bold text-[var(--sol-base2)] text-lg">Saved Versions</h4>
+                 <button class="px-4 py-2 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] rounded-full text-xs font-bold hover:bg-[var(--sol-cyan)]/20 transition-colors">+ ADD</button>
+              </div>
+              <div class="space-y-2">
+                <div class="h-14 rounded-lg glass flex items-center px-4 gap-4 border-[var(--sol-cyan)]/20">
+                  <div class="w-8 h-8 rounded-full bg-[var(--sol-cyan)] flex items-center justify-center text-[var(--sol-base03)] text-xs font-bold">▶</div>
+                  <div class="flex-1">
+                    <div class="h-3 w-1/3 bg-[var(--sol-base01)]/40 rounded"></div>
+                  </div>
+                  <div class="text-xs text-[var(--sol-cyan)] font-bold">4:06</div>
+                </div>
+                <div class="h-14 rounded-lg hover:bg-[var(--sol-base02)]/30 transition-colors flex items-center px-4 gap-4">
+                  <div class="w-8 h-8 rounded-full bg-transparent border border-[var(--sol-base01)]/30 flex items-center justify-center text-[var(--sol-base01)] text-xs">▶</div>
+                  <div class="flex-1">
+                    <div class="h-3 w-1/4 bg-[var(--sol-base01)]/20 rounded"></div>
+                  </div>
+                  <div class="text-xs text-[var(--sol-base01)] font-bold">4:12</div>
+                </div>
+              </div>
+           </div>
+           
+           <div class="w-80 bg-[var(--sol-base02)]/20 border-l border-[var(--sol-base01)]/10 p-8 flex flex-col gap-8">
+              <div>
+                <h4 class="font-bold text-[var(--sol-base0)] text-xs tracking-wider mb-4">TABS</h4>
+                <div class="flex flex-col gap-3">
+                   <div class="text-[var(--sol-cyan)] font-bold text-sm">Versions</div>
+                   <div class="text-[var(--sol-base01)] font-bold text-sm">Lyrics</div>
+                   <div class="text-[var(--sol-base01)] font-bold text-sm">Credits</div>
+                   <div class="text-[var(--sol-base01)] font-bold text-sm">Setlists</div>
+                </div>
+              </div>
+           </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>
