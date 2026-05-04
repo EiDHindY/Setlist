@@ -146,12 +146,37 @@ export default function Player() {
   const thumbnailUrl = version.thumbnailUrl ||
     `https://img.youtube.com/vi/${version.youtubeVideoId}/mqdefault.jpg`;
 
+  const [bounds, setBounds] = useState({ top: 0, left: 0, right: 0, bottom: 0 });
+  const dragContainerRef = useRef<HTMLDivElement>(null);
+
+  // Dynamically calculate drag boundaries based on the element's current size and position
+  useEffect(() => {
+    const updateBounds = () => {
+      if (!dragContainerRef.current) return;
+      const rect = dragContainerRef.current.getBoundingClientRect();
+      const padding = 24; // Keep 24px away from screen edges
+      
+      setBounds({
+        top: -(rect.top - padding),
+        bottom: window.innerHeight - rect.bottom - padding > 0 ? window.innerHeight - rect.bottom - padding : 0,
+        left: -(rect.left - padding),
+        right: window.innerWidth - rect.right - padding > 0 ? window.innerWidth - rect.right - padding : 0,
+      });
+    };
+
+    updateBounds();
+    // Re-calculate on resize or when it expands/collapses
+    window.addEventListener('resize', updateBounds);
+    const timeout = setTimeout(updateBounds, 100); // Give it a moment to render
+    
+    return () => {
+      window.removeEventListener('resize', updateBounds);
+      clearTimeout(timeout);
+    };
+  }, [isExpanded, song]);
+
   return (
     <>
-      {/* ── DRAG CONSTRAINTS ── */}
-      {/* This invisible full-screen div tells the draggable player where its boundaries are */}
-      <div ref={constraintsRef} className="fixed inset-4 pointer-events-none z-0" />
-
       {/* ── GLOBAL PLAYER CONTAINER ── */}
       {/* This div stays in the same place to prevent iframe reload, we move it with CSS */}
       <div 
@@ -196,8 +221,9 @@ export default function Player() {
       {/* ── Mini Player Bar ── */}
       {!isExpanded && (
         <motion.div
+          ref={dragContainerRef}
           drag
-          dragConstraints={constraintsRef}
+          dragConstraints={bounds}
           dragElastic={0.2}
           dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
           onDragStart={() => {
