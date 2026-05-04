@@ -16,6 +16,7 @@ export default function Player() {
   const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const constraintsRef = useRef<HTMLDivElement | null>(null);
+  const isDragging = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const apiReady = useRef(false);
   const creatingPlayer = useRef(false);
@@ -199,10 +200,23 @@ export default function Player() {
           dragConstraints={constraintsRef}
           dragElastic={0.1}
           dragMomentum={false}
+          onDragStart={() => {
+            isDragging.current = true;
+          }}
+          onDragEnd={() => {
+            // Wait slightly before clearing the flag so the click event has time to be suppressed
+            setTimeout(() => {
+              isDragging.current = false;
+            }, 100);
+          }}
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          onClick={toggleExpand}
+          onClick={() => {
+            if (!isDragging.current) {
+              toggleExpand();
+            }
+          }}
           className="fixed bottom-6 left-4 md:left-6 right-4 md:right-auto md:w-80 z-[70] pointer-events-none"
         >
           <div 
