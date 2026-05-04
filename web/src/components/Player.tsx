@@ -202,6 +202,7 @@ export default function Player() {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
+          onClick={toggleExpand}
           className="fixed bottom-6 left-4 md:left-6 right-4 md:right-auto md:w-80 z-[70] pointer-events-none"
         >
           <div 
@@ -211,7 +212,6 @@ export default function Player() {
             {/* Thumbnail / Visualizer */}
             <div 
               className="w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 relative group cursor-pointer"
-              onClick={toggleExpand}
             >
               <img src={thumbnailUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -233,7 +233,7 @@ export default function Player() {
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0 cursor-pointer flex flex-col justify-center h-full" onClick={toggleExpand}>
+            <div className="flex-1 min-w-0 cursor-pointer flex flex-col justify-center h-full">
               <p className="text-white text-sm md:text-base font-bold truncate">{song.title}</p>
               <p className="text-[var(--sol-cyan)] text-[11px] md:text-xs truncate opacity-80 mb-1">{version.channelName || 'YouTube'}</p>
               <div className="hidden md:flex items-center gap-2 mt-1">
