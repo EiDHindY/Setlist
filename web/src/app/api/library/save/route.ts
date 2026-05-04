@@ -1,0 +1,126 @@
+// POST /api/library/save
+// Replaces: POST /api/library/save from .NET LibraryController
+// Find-or-create a global Song, then link it to the user's library.
+
+export const runtime = 'edge';
+
+import { createAdminClient } from '@/lib/supabase-admin';
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { userId, appleTrackId, title, artist, albumArtUrl, duration } = body;
+
+    if (!userId || !title || !artist) {
+      return Response.json({ error: 'userId, title, and artist are required.' }, { status: 400 });
+    }
+
+    const admin = createAdminClient();
+
+    // 1. Ensure user exists
+    const { data: existingUser } = await admin
+      .from('Users')
+      .select('Id')
+      .eq('Id', userId)
+      .single();
+
+    if (!existingUser) {
+      await admin.from('Users').insert({
+        Id: userId,
+        Email: 'unknown@setlist.app',
+        FullName: 'Unknown User',
+        DisplayName: 'Unknown User',
+        ExperiencePoints: 0,
+        Level: 1,
+        IsPremium: false,
+        CreatedAt: new Date().toISOString(),
+        UpdatedAt: new Date().toISOString(),
+        LastActiveAt: new Date().toISOString(),
+      });
+    }
+
+    // 2. Find or create the global master song
+    let song: any = null;
+
+    if (appleTrackId) {
+      const { data } = await admin
+        .from('Songs')
+        .select('*')
+        .eq('AppleTrackId', appleTrackId)
+        .single();
+      song = data;
+    }
+
+    if (!song) {
+      const { data } = await admin
+        .from('Songs')
+        .select('*')
+        .eq('Title', title)
+        .eq('Artist', artist)
+        .single();
+      song = data;
+    }
+
+    if (!song) {
+      const { data: newSong, error: insertErr } = await admin
+        .from('Songs')
+        .insert({
+          Title: title,
+          Artist: artist,
+          AlbumArtUrl: albumArtUrl ?? null,
+          AppleTrackId: appleTrackId ?? null,
+          Duration: duration ?? 0,
+          CreatedBy: userId,
+          CreatedAt: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertErr) throw insertErr;
+      song = newSong;
+    }
+
+    // 3. Link song to user's library (if not already there)
+    const { data: existingUserSong } = await admin
+      .from('UserSongs')
+      .select('SongId')
+      .eq('UserId', userId)
+      .eq('SongId', song.Id)
+      .single();
+
+    if (!existingUserSong) {
+      await admin.from('UserSongs').insert({
+        UserId: userId,
+        SongId: song.Id,
+        AddedAt: new Date().toISOString(),
+      });
+    }
+
+    // 4. Return the song with its versions
+    const { data: versions } = await admin
+      .from('SongVersions')
+      .select('Id, YouTubeId, Title, ChannelName, ThumbnailUrl, Duration')
+      .eq('SongId', song.Id)
+      .eq('UserId', userId);
+
+    return Response.json({
+      id: song.Id,
+      title: song.Title,
+      artist: song.Artist,
+      albumArtUrl: song.AlbumArtUrl ?? null,
+      duration: song.Duration ?? 0,
+      url: song.Url ?? null,
+      versions: (versions ?? []).map((v: any) => ({
+        id: v.Id,
+        youTubeId: v.YouTubeId,
+        title: v.Title,
+        channelName: v.ChannelName ?? null,
+        thumbnailUrl: v.ThumbnailUrl ?? null,
+        duration: v.Duration ?? 0,
+      })),
+    });
+  } catch (err) {
+    console.error('[POST /api/library/save] Error:', err);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

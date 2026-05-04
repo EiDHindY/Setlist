@@ -1,12 +1,10 @@
 // ── LIBRARY SERVICE ─────────────────────────────────────────────────
-// Port of mobile/lib/services/library_service.dart
-// Manages the user's song collection via the C# backend
+// Manages the user's song collection via Next.js API routes (Supabase backend)
 
-import { config } from '@/utils/config';
 import type { Song, SongVersion, SearchSuggestion, YouTubeSearchResult } from '@/types/song';
 import { parseSong } from '@/types/song';
 
-const BASE_URL = `${config.apiUrl}/api/library`;
+const BASE_URL = `/api/library`;
 
 /**
  * Fetches the user's library songs from the cloud.

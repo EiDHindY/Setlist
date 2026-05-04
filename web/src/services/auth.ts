@@ -2,7 +2,6 @@
 // Port of mobile/lib/services/auth_service.dart
 // Syncs the Supabase identity with the C# backend
 
-import { config } from '@/utils/config';
 import { supabase } from '@/utils/supabase';
 
 /**
@@ -23,9 +22,9 @@ export async function syncUserWithBackend(): Promise<void> {
   };
 
   try {
-    console.log('🛰️ Sending Sync Request to Backend:', `${config.apiUrl}/api/user/sync`);
+    console.log('🛰️ Sending Sync Request to Backend:', `/api/user/sync`);
 
-    const response = await fetch(`${config.apiUrl}/api/user/sync`, {
+    const response = await fetch(`/api/user/sync`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
