@@ -33,7 +33,7 @@ function playbackReducer(state: PlaybackState, action: PlaybackAction): Playback
         song: action.song,
         version: action.version,
         isPlaying: true,
-        isExpanded: false,
+        isExpanded: true,
       };
     case 'STOP':
       return initialState;
