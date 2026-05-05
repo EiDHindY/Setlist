@@ -65,10 +65,10 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const handleLyricsScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const currentY = e.currentTarget.scrollTop;
     const diff = currentY - lastScrollY.current;
-    if (diff > 8) {
-      setHeaderVisible(false); // scrolling down
-    } else if (diff < -8) {
-      setHeaderVisible(true); // scrolling up
+    if (diff > 2) {
+      setHeaderVisible(false);
+    } else if (diff < -2) {
+      setHeaderVisible(true);
     }
     lastScrollY.current = currentY;
   }, []);
@@ -95,8 +95,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
 
         {/* ── LEFT PANE: Album Art & Header ──────────────────────── */}
         <div className="relative flex flex-col w-full md:w-1/2 flex-shrink-0 z-10 md:border-r md:border-[var(--sol-base01)]/20 md:items-center md:justify-center md:p-12">
-          {/* Top Bar — always visible */}
-          <div className="flex items-center px-4 py-3 flex-shrink-0 md:absolute md:top-4 md:left-4 md:w-[calc(100%-2rem)]">
+          {/* Top Bar — mobile: only on Play tab; desktop: always */}
+          <div className={`items-center px-4 py-3 flex-shrink-0 md:absolute md:top-4 md:left-4 md:w-[calc(100%-2rem)] ${currentTab === 0 ? 'flex' : 'hidden md:flex'}`}>
             <button
               onClick={(e) => {
                 e.preventDefault();
