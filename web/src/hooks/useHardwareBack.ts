@@ -2,17 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 
-// Global counter to track the sequence of modal states
-let globalStateId = 0;
+// Global stack to track open modals in order
+const modalStack: string[] = [];
 
 // Global flag to prevent programmatic history pops from triggering other listeners
 let isProgrammaticBack = false;
 
 /**
  * Hook to manage mobile hardware back button/swipe back gesture.
- * When `isOpen` is true, pushes a state to history.
- * If the user uses the back gesture, calls `onClose()`.
- * If closed programmatically (via UI), cleanly removes the history state.
+ * Uses an in-memory stack to ensure only the topmost modal/overlay responds to a back action.
  * 
  * @param isOpen Whether the modal/overlay is currently open
  * @param onClose Callback to close the modal/overlay
@@ -26,31 +24,25 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
   }, [onClose]);
 
   useEffect(() => {
-    // Skip if not open or SSR
     if (!isOpen || typeof window === 'undefined') return;
 
-    // Use Date.now() instead of a module-level variable to survive Next.js Hot Reloads
-    const currentId = Date.now();
+    // Push this modal onto the global stack
+    modalStack.push(modalId);
 
-    // Push state immediately while preserving Next.js internal state
-    window.history.pushState({ ...window.history.state, modalId, id: currentId }, '');
+    // Push state immediately to create a history entry
+    window.history.pushState({ ...window.history.state, modalId }, '');
 
     const handlePopState = (e: PopStateEvent) => {
-      if (isProgrammaticBack) {
-        // Ignore this popstate because we triggered it programmatically via UI close
-        return;
-      }
+      if (isProgrammaticBack) return;
 
-      // If the state we landed on has a lower ID, it means we went back.
-      // (or if it has no id, meaning we went back to a base page without our custom state)
-      const incomingId = e.state?.id || 0;
-      if (incomingId < currentId) {
+      // Only respond if THIS modal is at the top of the stack
+      if (modalStack[modalStack.length - 1] === modalId) {
         onCloseRef.current();
+        // Do not pop from modalStack here; it will be removed in the cleanup effect
+        // when isOpen becomes false.
       }
     };
 
-    // Wait 150ms before listening to prevent instantaneous 'ghost' popstate events
-    // that some browsers/frameworks mistakenly fire immediately after a pushState.
     const timeoutId = setTimeout(() => {
       window.addEventListener('popstate', handlePopState);
     }, 150);
@@ -59,17 +51,21 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
       clearTimeout(timeoutId);
       window.removeEventListener('popstate', handlePopState);
 
-      // If the component is unmounting or isOpen became false via the UI,
-      // and the browser history state is still exactly our state,
-      // we need to pop it so the history remains clean.
-      if (window.history.state?.id === currentId) {
-        isProgrammaticBack = true;
-        window.history.back();
-        
-        // Reset the flag after the popstate has been processed
-        setTimeout(() => {
-          isProgrammaticBack = false;
-        }, 150);
+      // Remove this modal from the stack
+      const index = modalStack.lastIndexOf(modalId);
+      if (index !== -1) {
+        // If it was the top of the stack, and we are closing it programmatically (not via popstate),
+        // we should pop the browser history to keep it in sync.
+        const wasTop = index === modalStack.length - 1;
+        modalStack.splice(index, 1);
+
+        if (wasTop) {
+          isProgrammaticBack = true;
+          window.history.back();
+          setTimeout(() => {
+            isProgrammaticBack = false;
+          }, 150);
+        }
       }
     };
   }, [isOpen, modalId]);
