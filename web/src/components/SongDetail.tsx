@@ -114,7 +114,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
           </div>
 
           {/* Song Header — always visible, static */}
-          <div className="px-5 pb-5 flex md:flex-col items-start md:items-center gap-4 flex-shrink-0 w-full">
+          <div className={`px-5 pb-5 flex md:flex-col items-start md:items-center gap-4 flex-shrink-0 w-full ${currentTab !== 0 ? 'pt-4 md:pt-0' : ''}`}>
             {/* Album Art */}
             <div
               className="w-20 h-20 md:w-64 md:h-64 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] md:shadow-2xl md:mb-6 cursor-pointer transition-bounce hover:scale-105 mx-auto md:mx-0"
@@ -169,7 +169,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
               // ── Versions List ──
               <div className="flex flex-col h-full">
                 {song.versions.length > 0 ? (
-                  <div className="flex-1 overflow-y-auto px-2 md:px-0 pb-24 md:pb-6">
+                  <div className="px-2 md:px-0 pb-24 md:pb-6">
                     {song.versions.map((version, i) => {
                       const isCurrentlyPlaying = state.version?.youtubeVideoId === version.youtubeVideoId;
                       const thumbnailUrl = version.thumbnailUrl ||
@@ -217,11 +217,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                             {/* Play Indicator */}
                             <div className="flex flex-col items-center gap-1 transition-bounce group-hover:scale-110 group-active:scale-95">
                               {isCurrentlyPlaying && state.isPlaying ? (
-                                <Pause
-                                  size={28}
-                                  className="text-[var(--sol-cyan)]"
-                                  fill="currentColor"
-                                />
+                                <Pause size={28} className="text-[var(--sol-cyan)]" fill="currentColor" />
                               ) : (
                                 <Play
                                   size={28}
@@ -237,26 +233,31 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                         </motion.div>
                       );
                     })}
+
+                    {/* Add Version Button — inline after last version */}
+                    <button
+                      onClick={() => setShowVersionSearch(true)}
+                      className="w-full flex items-center justify-center gap-2 py-4 mt-1 rounded-2xl border border-[var(--sol-cyan)]/30 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] font-bold tracking-wider text-sm transition-bounce hover:scale-[1.02] hover:bg-[var(--sol-cyan)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-outfit)]"
+                    >
+                      <PlusCircle size={20} />
+                      ADD VERSION
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center">
+                  <div className="flex-1 flex flex-col items-center justify-center pb-24">
                     <Disc3 size={56} className="text-[var(--sol-base01)]/30 mb-4" strokeWidth={1.5} />
                     <p className="text-[var(--sol-base01)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">
                       NO VERSIONS
                     </p>
+                    <button
+                      onClick={() => setShowVersionSearch(true)}
+                      className="mt-6 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl border border-[var(--sol-cyan)]/30 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] font-bold tracking-wider text-sm transition-bounce hover:scale-[1.02] hover:bg-[var(--sol-cyan)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-outfit)]"
+                    >
+                      <PlusCircle size={20} />
+                      ADD VERSION
+                    </button>
                   </div>
                 )}
-
-                {/* Add Version Button */}
-                <div className="px-5 pb-5 md:pb-6 flex-shrink-0">
-                  <button
-                    onClick={() => setShowVersionSearch(true)}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-[var(--sol-cyan)]/30 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] font-bold tracking-wider text-sm transition-bounce hover:scale-[1.02] hover:bg-[var(--sol-cyan)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-outfit)]"
-                  >
-                    <PlusCircle size={20} />
-                    ADD VERSION
-                  </button>
-                </div>
               </div>
             ) : currentTab === 1 ? (
               // ── Lyrics Tab ──
