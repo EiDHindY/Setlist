@@ -8,7 +8,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, PlusCircle, Play, Pause, Music, Disc3, Mic2,
-  Users, BarChart3, ListMusic, User
+  Users, BarChart3, ListMusic, User, AlignLeft, Clock, Languages, FilePenLine
 } from 'lucide-react';
 import type { Song, SongVersion } from '@/types/song';
 import { formatDuration } from '@/types/song';
@@ -30,6 +30,13 @@ const TABS = [
   { id: 4, label: 'Stats', iconActive: BarChart3, icon: BarChart3 },
 ];
 
+const LYRICS_SUB_TABS = [
+  { id: 'view', label: 'View', icon: AlignLeft },
+  { id: 'sync', label: 'Sync', icon: Clock },
+  { id: 'translate', label: 'Translate', icon: Languages },
+  { id: 'edit', label: 'Edit', icon: FilePenLine },
+];
+
 export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailProps) {
   const [currentTab, setCurrentTab] = useState(0);
   const [showVersionSearch, setShowVersionSearch] = useState(false);
@@ -37,6 +44,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const [lyricsData, setLyricsData] = useState<{ plain: string | null; source: string } | null>(null);
   const [lyricsLoading, setLyricsLoading] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
+  const [isDeepOpen, setIsDeepOpen] = useState(false);
+  const [activeLyricsSubTab, setActiveLyricsSubTab] = useState('view');
   const lastScrollY = useRef(0);
   const { play, state } = usePlayback();
 
@@ -77,7 +86,14 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
 
   // Reset header visibility when switching away from lyrics tab
   const handleTabChange = useCallback((id: number, dir?: 'left' | 'right') => {
+    if (id === currentTab && id === 1) {
+      // Toggle deep open if tapping active Lyrics tab
+      setIsDeepOpen((prev) => !prev);
+      return;
+    }
+
     setSwipeDir(dir ?? (id > currentTab ? 'left' : 'right'));
+    setIsDeepOpen(false);
     setCurrentTab(id);
     if (id !== 1) {
       setHeaderVisible(true);
@@ -97,10 +113,14 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) * 1.5;
+
+    if (Math.abs(deltaX) > 50 && isHorizontalSwipe) {
       if (deltaX < 0) {
+        // Swipe left -> Next tab
         handleTabChange(Math.min(currentTab + 1, TABS.length - 1), 'left');
       } else {
+        // Swipe right -> Previous tab
         handleTabChange(Math.max(currentTab - 1, 0), 'right');
       }
     }
@@ -375,33 +395,96 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
               transform: headerVisible ? 'translateY(0)' : 'translateY(100%)',
             }}
           >
-            <div className="glass-heavy border-t border-[var(--sol-cyan)]/20">
-              <div className="flex items-center justify-around px-2 py-2 w-full max-w-2xl mx-auto">
-                {TABS.map((tab) => {
-                  const isActive = currentTab === tab.id;
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className="flex flex-col items-center gap-1 px-3 py-1.5 transition-colors cursor-pointer"
-                    >
-                      <Icon
-                        size={22}
-                        className={isActive ? 'text-[var(--sol-cyan)]' : 'text-[var(--sol-base01)]'}
-                        strokeWidth={isActive ? 2.5 : 2}
-                      />
-                      <span
-                        className={`text-[10px] font-[family-name:var(--font-montserrat)] ${
-                          isActive ? 'text-[var(--sol-cyan)] font-semibold' : 'text-[var(--sol-base01)]'
-                        }`}
-                      >
-                        {tab.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="glass-heavy border-t border-[var(--sol-cyan)]/20 overflow-hidden relative min-h-[64px] flex items-center">
+              <AnimatePresence mode="wait">
+                {currentTab === 1 && isDeepOpen ? (
+                  /* ── LYRICS SUB-NAV ───────────────────────────────────── */
+                  <motion.div
+                    key="sub"
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 100, opacity: 0 }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    onDragEnd={(_, info) => {
+                      if (info.offset.x < -40) setIsDeepOpen(false);
+                    }}
+                    className="flex items-center w-full justify-around px-2 py-2"
+                  >
+                    {LYRICS_SUB_TABS.map((sub) => {
+                      const isActive = activeLyricsSubTab === sub.id;
+                      const Icon = sub.icon;
+                      return (
+                        <motion.button
+                          key={sub.id}
+                          onClick={() => setActiveLyricsSubTab(sub.id)}
+                          layout
+                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                          className={`flex items-center gap-1.5 rounded-full cursor-pointer transition-colors shrink-0 ${
+                            isActive
+                              ? 'bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-3 py-1.5'
+                              : 'bg-transparent text-[var(--sol-base01)] hover:text-[var(--sol-base1)] p-1.5'
+                          }`}
+                        >
+                          <Icon size={isActive ? 16 : 20} strokeWidth={isActive ? 2.5 : 2} />
+                          <AnimatePresence>
+                            {isActive && (
+                              <motion.span
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: 'auto', opacity: 1 }}
+                                exit={{ width: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="text-[11px] font-bold tracking-wide whitespace-nowrap overflow-hidden font-[family-name:var(--font-montserrat)]"
+                              >
+                                {sub.label}
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
+                        </motion.button>
+                      );
+                    })}
+                  </motion.div>
+                ) : (
+                  /* ── MAIN TABS ────────────────────────────────────────── */
+                  <motion.div
+                    key="main"
+                    initial={{ x: -100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -100, opacity: 0 }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    onDragEnd={(_, info) => {
+                      if (info.offset.x > 40 && currentTab === 1) setIsDeepOpen(true);
+                    }}
+                    className="flex items-center justify-around w-full max-w-2xl mx-auto px-2 py-2"
+                  >
+                    {TABS.map((tab) => {
+                      const isActive = currentTab === tab.id;
+                      const Icon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabChange(tab.id)}
+                          className="flex flex-col items-center gap-1 px-3 py-1.5 transition-colors cursor-pointer"
+                        >
+                          <Icon
+                            size={22}
+                            className={isActive ? 'text-[var(--sol-cyan)]' : 'text-[var(--sol-base01)]'}
+                            strokeWidth={isActive ? 2.5 : 2}
+                          />
+                          <span
+                            className={`text-[10px] font-[family-name:var(--font-montserrat)] ${
+                              isActive ? 'text-[var(--sol-cyan)] font-semibold' : 'text-[var(--sol-base01)]'
+                            }`}
+                          >
+                            {tab.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
