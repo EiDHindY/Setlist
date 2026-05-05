@@ -8,7 +8,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, PlusCircle, Play, Pause, Music, Disc3, Mic2,
-  Users, BarChart3, ListMusic, User, AlignLeft, Clock, Languages, FilePenLine
+  Users, BarChart3, ListMusic, User, AlignLeft, Clock, Languages, FilePenLine, ChevronRight
 } from 'lucide-react';
 import type { Song, SongVersion } from '@/types/song';
 import { formatDuration } from '@/types/song';
@@ -465,20 +465,31 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                         <button
                           key={tab.id}
                           onClick={() => handleTabChange(tab.id)}
-                          className="flex flex-col items-center gap-1 px-3 py-1.5 transition-colors cursor-pointer"
+                          className="flex flex-col items-center gap-1 px-3 py-1.5 transition-colors cursor-pointer relative"
                         >
                           <Icon
                             size={22}
                             className={isActive ? 'text-[var(--sol-cyan)]' : 'text-[var(--sol-base01)]'}
                             strokeWidth={isActive ? 2.5 : 2}
                           />
-                          <span
-                            className={`text-[10px] font-[family-name:var(--font-montserrat)] ${
-                              isActive ? 'text-[var(--sol-cyan)] font-semibold' : 'text-[var(--sol-base01)]'
-                            }`}
-                          >
-                            {tab.label}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span
+                              className={`text-[10px] font-[family-name:var(--font-montserrat)] ${
+                                isActive ? 'text-[var(--sol-cyan)] font-semibold' : 'text-[var(--sol-base01)]'
+                              }`}
+                            >
+                              {tab.label}
+                            </span>
+                            {isActive && tab.id === 1 && (
+                              <motion.div
+                                animate={{ x: [0, 2, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                                className="absolute -right-1 top-[55%]"
+                              >
+                                <ChevronRight size={10} className="text-[var(--sol-cyan)]" />
+                              </motion.div>
+                            )}
+                          </div>
                         </button>
                       );
                     })}
