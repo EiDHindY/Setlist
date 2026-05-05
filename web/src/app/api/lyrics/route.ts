@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase-admin';
 
+export const runtime = 'edge';
+
 // ── LRCLIB & Genius Lyrics API Route ──────────────────────────────────
 // Checks Database first, then LRCLIB, then falls back to Genius scraping.
 
