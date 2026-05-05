@@ -4,7 +4,7 @@
 // Port of mobile/lib/screens/song_detail_screen.dart
 // Shows song header + versions list + inline player controls
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, PlusCircle, Play, Pause, Music, Disc3, Mic2,
@@ -34,8 +34,10 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const [currentTab, setCurrentTab] = useState(0);
   const [showVersionSearch, setShowVersionSearch] = useState(false);
   const [artworkExpanded, setArtworkExpanded] = useState(false);
-  const [lyricsData, setLyricsData] = useState<{ plain: string | null } | null>(null);
+  const [lyricsData, setLyricsData] = useState<{ plain: string | null; source: string } | null>(null);
   const [lyricsLoading, setLyricsLoading] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
   const { play, state } = usePlayback();
 
   // Fetch lyrics when the Lyrics tab is opened
@@ -46,8 +48,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
     const params = new URLSearchParams({ title: song.title, artist: song.artist });
     fetch(`/api/lyrics?${params.toString()}`)
       .then((r) => r.json())
-      .then((data) => setLyricsData({ plain: data.plain ?? null }))
-      .catch(() => setLyricsData({ plain: null }))
+      .then((data) => setLyricsData({ plain: data.plain ?? null, source: data.source ?? 'Unknown' }))
+      .catch(() => setLyricsData({ plain: null, source: 'Error' }))
       .finally(() => setLyricsLoading(false));
   }, [currentTab, song.title, song.artist, lyricsData]);
 
@@ -59,6 +61,26 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   }, [song, play]);
 
   const highResArt = song.albumArt.replace('100x100bb.jpg', '600x600bb.jpg');
+
+  const handleLyricsScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const currentY = e.currentTarget.scrollTop;
+    const diff = currentY - lastScrollY.current;
+    if (diff > 8) {
+      setHeaderVisible(false); // scrolling down
+    } else if (diff < -8) {
+      setHeaderVisible(true); // scrolling up
+    }
+    lastScrollY.current = currentY;
+  }, []);
+
+  // Reset header visibility when switching away from lyrics tab
+  const handleTabChange = useCallback((id: number) => {
+    setCurrentTab(id);
+    if (id !== 1) {
+      setHeaderVisible(true);
+      lastScrollY.current = 0;
+    }
+  }, []);
 
   return (
     <>
@@ -73,7 +95,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
 
         {/* ── LEFT PANE: Album Art & Header ──────────────────────── */}
         <div className="relative flex flex-col w-full md:w-1/2 flex-shrink-0 z-10 md:border-r md:border-[var(--sol-base01)]/20 md:items-center md:justify-center md:p-12">
-          {/* Top Bar (Mobile: Standard, Desktop: Absolute Back Button) */}
+          {/* Top Bar — always visible */}
           <div className="flex items-center px-4 py-3 flex-shrink-0 md:absolute md:top-4 md:left-4 md:w-[calc(100%-2rem)]">
             <button
               onClick={(e) => {
@@ -85,45 +107,50 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             >
               <ArrowLeft size={20} className="text-[var(--sol-cyan)]" />
             </button>
-            
-            {/* Unified Title */}
             <h2 className="flex-1 text-center md:text-left ml-2 md:ml-4 text-[var(--sol-base01)] text-[11px] md:text-sm font-[family-name:var(--font-montserrat)] truncate">
               Your collection of <span className="text-[var(--sol-cyan)] font-semibold">{song.title}</span> by <span className="text-[var(--sol-cyan)] font-semibold">{song.artist}</span>
             </h2>
-
-            <div className="w-10 flex-shrink-0 md:hidden" /> {/* Spacer for precise center alignment on mobile */}
+            <div className="w-10 flex-shrink-0 md:hidden" />
           </div>
 
-          {/* Song Header */}
-          <div className="px-5 pb-5 flex md:flex-col items-start md:items-center gap-4 flex-shrink-0 w-full">
-            {/* Album Art */}
+          {/* Song Header — clip wrapper hides the sliding content on mobile */}
+          <div className="overflow-hidden md:overflow-visible flex-shrink-0">
             <div
-              className="w-20 h-20 md:w-64 md:h-64 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] md:shadow-2xl md:mb-6 cursor-pointer transition-bounce hover:scale-105 mx-auto md:mx-0"
-              onClick={() => setArtworkExpanded(true)}
+              className="px-5 pb-5 flex md:flex-col items-start md:items-center gap-4 w-full will-change-transform"
+              style={{
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: headerVisible ? 'translateY(0)' : 'translateY(-110%)',
+              }}
             >
-              {song.albumArt ? (
-                <img src={song.albumArt} alt={song.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center border border-[var(--sol-base01)]/30">
-                  <Music size={36} className="text-[var(--sol-base01)] md:w-20 md:h-20" />
-                </div>
-              )}
-            </div>
+              {/* Album Art */}
+              <div
+                className="w-20 h-20 md:w-64 md:h-64 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] md:shadow-2xl md:mb-6 cursor-pointer transition-bounce hover:scale-105 mx-auto md:mx-0"
+                onClick={() => setArtworkExpanded(true)}
+              >
+                {song.albumArt ? (
+                  <img src={song.albumArt} alt={song.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center border border-[var(--sol-base01)]/30">
+                    <Music size={36} className="text-[var(--sol-base01)] md:w-20 md:h-20" />
+                  </div>
+                )}
+              </div>
 
-            {/* Info */}
-            <div className="flex-1 md:flex-none min-w-0 pt-1 md:pt-0 text-left md:text-center w-full">
-              <h1 className="text-[var(--sol-base3)] text-xl md:text-4xl font-bold truncate md:whitespace-normal font-[family-name:var(--font-montserrat)] md:mb-2">
-                {song.title}
-              </h1>
-              <p className="text-[var(--sol-base0)] text-sm md:text-xl mt-1 md:mt-0 font-[family-name:var(--font-montserrat)] md:mb-10">
-                {song.artist}
-              </p>
+              {/* Info */}
+              <div className="flex-1 md:flex-none min-w-0 pt-1 md:pt-0 text-left md:text-center w-full">
+                <h1 className="text-[var(--sol-base3)] text-xl md:text-4xl font-bold truncate md:whitespace-normal font-[family-name:var(--font-montserrat)] md:mb-2">
+                  {song.title}
+                </h1>
+                <p className="text-[var(--sol-base0)] text-sm md:text-xl mt-1 md:mt-0 font-[family-name:var(--font-montserrat)] md:mb-10">
+                  {song.artist}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── RIGHT PANE: Tabs & Content ─────────────────────────── */}
-        <div className="relative flex-1 flex flex-col z-10 w-full md:w-1/2 md:bg-[var(--sol-base02)]/10">
+        <div className="relative flex-1 flex flex-col z-10 w-full md:w-1/2 md:bg-[var(--sol-base02)]/10 min-h-0">
           
           {/* Desktop Only Tabs Header */}
           <div className="hidden md:flex p-6 pb-2 border-b border-[var(--sol-base01)]/20 shrink-0 justify-between items-center">
@@ -131,7 +158,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setCurrentTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`pb-2 tracking-wider transition-colors cursor-pointer ${
                     currentTab === tab.id
                       ? 'text-[var(--sol-cyan)] border-b-2 border-[var(--sol-cyan)]'
@@ -241,19 +268,22 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
               </div>
             ) : currentTab === 1 ? (
               // ── Lyrics Tab ──
-              <div className="flex-1 overflow-y-auto hide-scrollbar px-5 pb-28 md:pb-6 pt-2">
+              <div
+                className="h-full overflow-y-auto hide-scrollbar px-5 pb-28 md:pb-6 pt-2"
+                onScroll={handleLyricsScroll}
+              >
                 {lyricsLoading && (
-                  <div className="flex flex-col items-center justify-center h-full gap-4">
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <div className="w-8 h-8 border-2 border-[var(--sol-cyan)] border-t-transparent rounded-full animate-spin" />
                     <p className="text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)]">Finding lyrics...</p>
                   </div>
                 )}
                 {!lyricsLoading && !lyricsData?.plain && (
-                  <div className="flex flex-col items-center justify-center h-full gap-3">
+                  <div className="flex flex-col items-center justify-center py-20 gap-3">
                     <Mic2 size={48} className="text-[var(--sol-base01)]/30" strokeWidth={1.5} />
                     <p className="text-[var(--sol-base01)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">NO LYRICS FOUND</p>
                     <p className="text-[var(--sol-base01)]/60 text-xs font-[family-name:var(--font-montserrat)] text-center max-w-[220px]">
-                      Couldn't find lyrics for this song on LRCLIB
+                      Couldn't find lyrics for this song on Genius or LRCLIB
                     </p>
                   </div>
                 )}
@@ -271,7 +301,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                         {line || '\u00A0'}
                       </p>
                     ))}
-                    <p className="text-[var(--sol-base01)]/40 text-xs italic mt-8 text-center font-[family-name:var(--font-outfit)]">Lyrics via LRCLIB</p>
+                    <p className="text-[var(--sol-base01)]/40 text-xs italic mt-8 text-center font-[family-name:var(--font-outfit)]">Lyrics via {lyricsData?.source || 'Genius'}</p>
                   </div>
                 )}
               </div>
@@ -297,8 +327,14 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             )}
           </div>
 
-          {/* ── Bottom Nav (Mobile Only) ───────────────────────────── */}
-          <div className="relative flex-shrink-0 z-10 w-full md:hidden">
+          {/* Bottom Nav (Mobile Only) */}
+          <div
+            className="relative flex-shrink-0 z-10 w-full md:hidden will-change-transform"
+            style={{
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: headerVisible ? 'translateY(0)' : 'translateY(100%)',
+            }}
+          >
             <div className="glass-heavy border-t border-[var(--sol-cyan)]/20">
               <div className="flex items-center justify-around px-2 py-2 w-full max-w-2xl mx-auto">
                 {TABS.map((tab) => {
@@ -307,7 +343,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setCurrentTab(tab.id)}
+                      onClick={() => handleTabChange(tab.id)}
                       className="flex flex-col items-center gap-1 px-3 py-1.5 transition-colors cursor-pointer"
                     >
                       <Icon

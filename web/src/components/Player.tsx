@@ -49,9 +49,9 @@ export default function Player() {
     fetch(`/api/lyrics?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
-        setLyricsData({ plain: data.plain ?? null, source: data.source ?? 'unknown' });
+        setLyricsData({ plain: data.plain ?? null, source: data.source ?? 'Unknown' });
       })
-      .catch(() => setLyricsData({ plain: null, source: 'error' }))
+      .catch(() => setLyricsData({ plain: null, source: 'Error' }))
       .finally(() => setLyricsLoading(false));
   }, [isExpanded, song?.title, song?.artist]);
 
@@ -333,7 +333,7 @@ export default function Player() {
                          </p>
                        ))}
                        <p className="text-[var(--sol-base01)]/40 text-xs italic mt-12 text-center font-[family-name:var(--font-outfit)]">
-                         Lyrics via LRCLIB
+                         Lyrics via {lyricsData.source}
                        </p>
                      </div>
                    )}
