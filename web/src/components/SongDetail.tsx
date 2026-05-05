@@ -4,7 +4,7 @@
 // Port of mobile/lib/screens/song_detail_screen.dart
 // Shows song header + versions list + inline player controls
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, PlusCircle, Play, Pause, Music, Disc3, Mic2,
@@ -34,7 +34,22 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const [currentTab, setCurrentTab] = useState(0);
   const [showVersionSearch, setShowVersionSearch] = useState(false);
   const [artworkExpanded, setArtworkExpanded] = useState(false);
+  const [lyricsData, setLyricsData] = useState<{ plain: string | null } | null>(null);
+  const [lyricsLoading, setLyricsLoading] = useState(false);
   const { play, state } = usePlayback();
+
+  // Fetch lyrics when the Lyrics tab is opened
+  useEffect(() => {
+    if (currentTab !== 1) return;
+    if (lyricsData !== null) return; // Already fetched
+    setLyricsLoading(true);
+    const params = new URLSearchParams({ title: song.title, artist: song.artist });
+    fetch(`/api/lyrics?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data) => setLyricsData({ plain: data.plain ?? null }))
+      .catch(() => setLyricsData({ plain: null }))
+      .finally(() => setLyricsLoading(false));
+  }, [currentTab, song.title, song.artist, lyricsData]);
 
   useHardwareBack(true, onBack, `song_detail_${song.id}`);
   useHardwareBack(artworkExpanded, () => setArtworkExpanded(false), `artwork_expanded_${song.id}`);
@@ -224,8 +239,44 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                   </button>
                 </div>
               </div>
+            ) : currentTab === 1 ? (
+              // ── Lyrics Tab ──
+              <div className="flex-1 overflow-y-auto hide-scrollbar px-5 pb-28 md:pb-6 pt-2">
+                {lyricsLoading && (
+                  <div className="flex flex-col items-center justify-center h-full gap-4">
+                    <div className="w-8 h-8 border-2 border-[var(--sol-cyan)] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)]">Finding lyrics...</p>
+                  </div>
+                )}
+                {!lyricsLoading && !lyricsData?.plain && (
+                  <div className="flex flex-col items-center justify-center h-full gap-3">
+                    <Mic2 size={48} className="text-[var(--sol-base01)]/30" strokeWidth={1.5} />
+                    <p className="text-[var(--sol-base01)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">NO LYRICS FOUND</p>
+                    <p className="text-[var(--sol-base01)]/60 text-xs font-[family-name:var(--font-montserrat)] text-center max-w-[220px]">
+                      Couldn't find lyrics for this song on LRCLIB
+                    </p>
+                  </div>
+                )}
+                {!lyricsLoading && lyricsData?.plain && (
+                  <div className="space-y-1">
+                    {lyricsData.plain.split('\n').map((line, i) => (
+                      <p
+                        key={i}
+                        className={`font-[family-name:var(--font-montserrat)] leading-relaxed ${
+                          line.trim() === ''
+                            ? 'h-4'
+                            : 'text-[var(--sol-base2)] text-base md:text-lg font-medium'
+                        }`}
+                      >
+                        {line || '\u00A0'}
+                      </p>
+                    ))}
+                    <p className="text-[var(--sol-base01)]/40 text-xs italic mt-8 text-center font-[family-name:var(--font-outfit)]">Lyrics via LRCLIB</p>
+                  </div>
+                )}
+              </div>
             ) : (
-              // ── Placeholder Tabs ──
+              // ── Other Placeholder Tabs ──
               <div className="flex flex-col items-center justify-center h-full pb-20 md:pb-0">
                 {(() => {
                   const tab = TABS[currentTab];
