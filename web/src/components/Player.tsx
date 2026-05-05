@@ -141,11 +141,6 @@ export default function Player() {
     togglePlayPause();
   }, [togglePlayPause]);
 
-  if (!song || !version) return null;
-
-  const thumbnailUrl = version.thumbnailUrl ||
-    `https://img.youtube.com/vi/${version.youtubeVideoId}/mqdefault.jpg`;
-
   const [bounds, setBounds] = useState({ top: 0, left: 0, right: 0, bottom: 0 });
   const dragContainerRef = useRef<HTMLDivElement>(null);
 
@@ -174,6 +169,11 @@ export default function Player() {
       clearTimeout(timeout);
     };
   }, [isExpanded, song]);
+
+  if (!song || !version) return null;
+
+  const thumbnailUrl = version.thumbnailUrl ||
+    `https://img.youtube.com/vi/${version.youtubeVideoId}/mqdefault.jpg`;
 
   return (
     <>
