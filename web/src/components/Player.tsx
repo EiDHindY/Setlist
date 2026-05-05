@@ -6,10 +6,17 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, Maximize2, Minimize2, Music2, Loader2 } from 'lucide-react';
+import { X, Play, Pause, Maximize2, Minimize2, Music2, Loader2, ChevronDown } from 'lucide-react';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import { useMediaSession, useWakeLock, hapticTap } from '@/hooks/useNative';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+
+const formatDuration = (seconds?: number) => {
+  if (!seconds) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
 
 export default function Player() {
   const { state, stop, togglePlayPause, setPlaying, toggleExpand } = usePlayback();
@@ -181,38 +188,92 @@ export default function Player() {
       {/* This div stays in the same place to prevent iframe reload, we move it with CSS */}
       <div 
         id="yt-player-root"
-        className={`fixed transition-all duration-500 ease-in-out z-[60] overflow-hidden rounded-2xl shadow-2xl bg-black ${
+        className={`fixed transition-all duration-500 ease-in-out z-[60] overflow-hidden bg-black ${
           isExpanded 
-            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] aspect-video max-w-4xl' 
-            : 'bottom-24 left-4 w-0 h-0 opacity-0 pointer-events-none'
+            ? 'top-0 left-0 w-full aspect-video rounded-b-2xl md:top-12 md:left-1/2 md:-translate-x-1/2 md:w-[90vw] md:max-w-4xl md:rounded-2xl md:shadow-2xl' 
+            : 'bottom-24 left-4 w-0 h-0 opacity-0 pointer-events-none rounded-2xl'
         }`}
       />
 
-      {/* ── Expanded Backdrop ── */}
+      {/* ── Expanded Backdrop & UI (Option 3 Video-First) ── */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={toggleExpand}
-            className="fixed inset-0 z-50 bg-[#002b36]/90 backdrop-blur-md flex flex-col"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+            className="fixed inset-0 z-50 bg-[var(--sol-base03)] flex flex-col pointer-events-auto"
           >
-            <div className="p-6 flex justify-between items-center pointer-events-none">
-              <div className="pointer-events-auto">
-                <h2 className="text-white font-bold text-xl">{song.title}</h2>
-                <p className="text-[var(--sol-cyan)]">{song.artist}</p>
-              </div>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleExpand();
-                }} 
-                className="p-3 bg-white/10 rounded-full text-white cursor-pointer hover:bg-white/20 hover:scale-110 active:scale-95 transition-all pointer-events-auto"
-                aria-label="Collapse Player"
-              >
-                <Minimize2 size={24} />
-              </button>
+            {/* Spacer for the video on mobile */}
+            <div className="w-full aspect-video flex-shrink-0 md:hidden" />
+            {/* Spacer for desktop */}
+            <div className="hidden md:block w-full h-[50vh] flex-shrink-0" />
+
+            {/* Collapse Button (Floating above video) */}
+            <button 
+               onClick={(e) => { e.stopPropagation(); toggleExpand(); }} 
+               className="absolute top-4 left-4 z-[70] w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white cursor-pointer hover:bg-black/70 hover:scale-110 active:scale-95 transition-all"
+               aria-label="Collapse Player"
+            >
+               <ChevronDown size={24} />
+            </button>
+
+            {/* Scrollable Content Container */}
+            <div className="flex-1 overflow-y-auto hide-scrollbar p-6 pb-32">
+               {/* Metadata */}
+               <div className="mb-6 flex justify-between items-start">
+                 <div>
+                   <h1 className="text-white text-xl md:text-3xl font-bold mb-1 font-[family-name:var(--font-montserrat)] leading-tight">{song.title}</h1>
+                   <p className="text-[var(--sol-cyan)] text-sm md:text-lg font-[family-name:var(--font-montserrat)]">{song.artist}</p>
+                 </div>
+               </div>
+
+               {/* Compact Controls */}
+               <div className="flex items-center gap-4 mb-8 bg-[var(--sol-base02)]/50 backdrop-blur-sm p-4 rounded-2xl border border-[var(--sol-base01)]/20 shadow-lg">
+                 <button 
+                   onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }} 
+                   className="w-14 h-14 bg-[var(--sol-cyan)] rounded-full flex items-center justify-center text-[var(--sol-base03)] text-xl shadow-[0_0_15px_rgba(42,161,152,0.4)] transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
+                 >
+                   {isPlaying ? <Pause size={28} className="fill-current" /> : <Play size={28} className="fill-current ml-1" />}
+                 </button>
+                 <div className="flex-1 min-w-0">
+                    <div className="h-1.5 w-full bg-black/40 rounded-full mb-2 overflow-hidden relative">
+                       {isPlaying && (
+                         <motion.div 
+                           className="absolute top-0 left-0 h-full bg-[var(--sol-cyan)]"
+                           initial={{ width: "0%" }}
+                           animate={{ width: "100%" }}
+                           transition={{ duration: version.duration || 180, ease: "linear", repeat: Infinity }}
+                         />
+                       )}
+                    </div>
+                    <div className="flex justify-between text-[11px] text-[var(--sol-base01)] font-mono font-medium tracking-wide">
+                       <span>0:00</span>
+                       <span>{formatDuration(version.duration)}</span>
+                    </div>
+                 </div>
+               </div>
+
+               {/* Tabs */}
+               <div className="flex gap-6 border-b border-[var(--sol-base01)]/20 mb-6 relative">
+                 <button className="text-[var(--sol-cyan)] pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)] relative">
+                    LYRICS
+                    <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[var(--sol-cyan)]" />
+                 </button>
+                 <button className="text-[var(--sol-base01)] hover:text-white transition-colors pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">UP NEXT</button>
+                 <button className="text-[var(--sol-base01)] hover:text-white transition-colors pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">VERSIONS</button>
+               </div>
+
+               {/* Tab Content (Lyrics Placeholder) */}
+               <div className="space-y-6 pt-2">
+                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">I am the architect</p>
+                  <p className="text-white text-2xl md:text-4xl font-bold bg-white/10 inline-block px-4 py-2 rounded-xl font-[family-name:var(--font-montserrat)] shadow-lg scale-105 origin-left transition-all">Of my own destruction</p>
+                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">I built these walls</p>
+                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">Just to watch them fall</p>
+                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">And now there's nothing left</p>
+                  <p className="text-[var(--sol-base01)] text-lg italic mt-12 mb-20 text-center font-[family-name:var(--font-outfit)]">End of lyrics</p>
+               </div>
             </div>
           </motion.div>
         )}

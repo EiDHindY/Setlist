@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Expanded Player Designs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --sol-base03: #002b36;
+      --sol-base02: #073642;
+      --sol-base01: #586e75;
+      --sol-base0: #839496;
+      --sol-base2: #eee8d5;
+      --sol-cyan: #2aa198;
+    }
+    body {
+      background-color: #000;
+      color: var(--sol-base0);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+      justify-content: center;
+    }
+    
+    .phone-mockup {
+      width: 375px;
+      height: 812px;
+      border-radius: 40px;
+      overflow: hidden;
+      position: relative;
+      border: 8px solid #333;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      background: var(--sol-base03);
+    }
+
+    /* Blurred Artwork Background */
+    .bg-blur-layer {
+      position: absolute;
+      inset: -20px;
+      background-image: url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      filter: blur(40px) brightness(0.4);
+      z-index: 0;
+    }
+
+    .gradient-layer {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(7, 54, 66, 0.2) 0%, var(--sol-base03) 100%);
+      z-index: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- OPTION 1: The "Apple Music" Glass Style -->
+  <div>
+    <h2 class="text-white text-xl font-bold mb-2 text-center">Option 1: The "Glass" Aesthetic</h2>
+    <p class="text-[var(--sol-base01)] text-sm mb-4 text-center max-w-[375px]">Heavily blurred background, floating artwork, and distinct layout areas.</p>
+    
+    <div class="phone-mockup">
+      <div class="bg-blur-layer"></div>
+      
+      <div class="relative z-10 h-full flex flex-col p-6 pt-12">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+          <button class="text-white/70 hover:text-white">⌄</button>
+          <span class="text-white/60 text-xs font-semibold tracking-widest uppercase">Now Playing</span>
+          <button class="text-white/70 hover:text-white">⋮</button>
+        </div>
+
+        <!-- Artwork/Video -->
+        <div class="w-full aspect-square rounded-2xl overflow-hidden shadow-2xl mb-10 border border-white/10">
+          <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover" />
+        </div>
+
+        <!-- Metadata -->
+        <div class="flex justify-between items-end mb-6">
+          <div>
+            <h1 class="text-white text-2xl font-bold mb-1">God Complex</h1>
+            <p class="text-[var(--sol-cyan)] text-lg">Bleed From Within</p>
+          </div>
+          <button class="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:bg-white/10">+</button>
+        </div>
+
+        <!-- Scrubber -->
+        <div class="mb-8">
+          <div class="h-1.5 w-full bg-white/20 rounded-full mb-2 relative">
+             <div class="absolute left-0 top-0 bottom-0 w-1/3 bg-white rounded-full relative">
+                <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow"></div>
+             </div>
+          </div>
+          <div class="flex justify-between text-xs text-white/50 font-mono">
+            <span>1:24</span>
+            <span>-2:42</span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between mb-auto px-4">
+          <button class="text-white/70 text-xl">🔀</button>
+          <button class="text-white text-3xl">⏮</button>
+          <button class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-black text-2xl pl-1 shadow-lg shadow-white/20">▶</button>
+          <button class="text-white text-3xl">⏭</button>
+          <button class="text-white/70 text-xl">🔁</button>
+        </div>
+
+        <!-- Bottom Drawer Action -->
+        <div class="mt-8 flex justify-between items-center bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/5">
+          <span class="text-white font-semibold">Lyrics</span>
+          <span class="text-white/50 text-sm">Swipe up</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- OPTION 2: The "Spotify" Immersive Gradient -->
+  <div>
+    <h2 class="text-white text-xl font-bold mb-2 text-center">Option 2: Immersive Gradient</h2>
+    <p class="text-[var(--sol-base01)] text-sm mb-4 text-center max-w-[375px]">Clean gradient bleed, massive artwork, lyrics directly visible below.</p>
+    
+    <div class="phone-mockup">
+      <div class="gradient-layer"></div>
+      
+      <div class="relative z-10 h-full flex flex-col pt-12 overflow-y-auto hide-scrollbar">
+        <!-- Header -->
+        <div class="flex justify-between items-center px-6 mb-6">
+          <button class="text-white/70 hover:text-white">⌄</button>
+          <span class="text-white font-bold text-sm">Bleed From Within</span>
+          <button class="text-white/70 hover:text-white">⋮</button>
+        </div>
+
+        <!-- Artwork/Video -->
+        <div class="w-full aspect-square px-6 mb-8">
+          <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover shadow-2xl" />
+        </div>
+
+        <div class="px-6 flex flex-col flex-1">
+          <!-- Metadata -->
+          <div class="mb-6">
+            <h1 class="text-white text-2xl font-bold mb-1">God Complex</h1>
+            <p class="text-white/70 text-base">Bleed From Within</p>
+          </div>
+
+          <!-- Scrubber -->
+          <div class="mb-6">
+            <div class="h-1 w-full bg-white/20 rounded-full mb-2">
+               <div class="w-1/3 h-full bg-white rounded-full"></div>
+            </div>
+            <div class="flex justify-between text-xs text-white/50">
+              <span>1:24</span>
+              <span>4:06</span>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex items-center justify-between mb-8">
+            <button class="text-[var(--sol-cyan)] text-xl">🔀</button>
+            <button class="text-white text-3xl">⏮</button>
+            <button class="w-16 h-16 bg-[var(--sol-cyan)] rounded-full flex items-center justify-center text-[var(--sol-base03)] text-2xl pl-1">▶</button>
+            <button class="text-white text-3xl">⏭</button>
+            <button class="text-white/70 text-xl">🔁</button>
+          </div>
+
+          <!-- Inline Lyrics Panel -->
+          <div class="bg-[var(--sol-cyan)] rounded-t-3xl p-6 mt-auto">
+             <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[var(--sol-base03)] font-bold">Lyrics</h3>
+                <button class="w-8 h-8 rounded-full bg-[var(--sol-base03)]/10 text-[var(--sol-base03)] flex justify-center items-center">⤢</button>
+             </div>
+             <p class="text-[var(--sol-base03)] text-2xl font-bold leading-tight opacity-50 mb-2">I am the architect</p>
+             <p class="text-[var(--sol-base03)] text-2xl font-bold leading-tight">Of my own destruction</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- OPTION 3: Setlist "Video-First" -->
+  <div>
+    <h2 class="text-white text-xl font-bold mb-2 text-center">Option 3: Video-First (YouTube Optimized)</h2>
+    <p class="text-[var(--sol-base01)] text-sm mb-4 text-center max-w-[375px]">Pins the YouTube video to the top, turns the bottom into a scrollable hub.</p>
+    
+    <div class="phone-mockup" style="background: var(--sol-base03)">
+      <!-- Fixed Video Header -->
+      <div class="w-full bg-black relative pt-12 pb-4">
+         <button class="absolute top-12 left-4 z-20 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-sm">⌄</button>
+         <div class="w-full aspect-video bg-gray-900 border-y border-white/10 relative flex items-center justify-center">
+            <span class="text-white/50">▶ YOUTUBE IFRAME</span>
+         </div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="p-6 h-full overflow-y-auto">
+        <!-- Metadata -->
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h1 class="text-white text-xl font-bold mb-1">God Complex (Official Music Video)</h1>
+            <p class="text-[var(--sol-cyan)] text-sm">Bleed From Within</p>
+          </div>
+        </div>
+
+        <!-- Compact Controls -->
+        <div class="flex items-center gap-4 mb-8 bg-[var(--sol-base02)] p-4 rounded-2xl border border-[var(--sol-base01)]/20">
+          <button class="w-12 h-12 bg-[var(--sol-cyan)] rounded-full flex items-center justify-center text-[var(--sol-base03)] text-xl pl-1 shadow-lg shadow-[var(--sol-cyan)]/20">▶</button>
+          <div class="flex-1">
+             <div class="h-1.5 w-full bg-black/30 rounded-full mb-1">
+                 <div class="w-1/3 h-full bg-[var(--sol-cyan)] rounded-full"></div>
+             </div>
+             <div class="flex justify-between text-[10px] text-[var(--sol-base01)] font-mono">
+                <span>1:24</span>
+                <span>4:06</span>
+             </div>
+          </div>
+        </div>
+
+        <!-- Tabbable Information -->
+        <div class="flex gap-4 border-b border-[var(--sol-base01)]/20 mb-6">
+           <button class="text-[var(--sol-cyan)] border-b-2 border-[var(--sol-cyan)] pb-2 text-sm font-bold tracking-wider">LYRICS</button>
+           <button class="text-[var(--sol-base01)] pb-2 text-sm font-bold tracking-wider">UP NEXT</button>
+           <button class="text-[var(--sol-base01)] pb-2 text-sm font-bold tracking-wider">VERSIONS</button>
+        </div>
+
+        <!-- Lyrics Content -->
+        <div class="space-y-4">
+           <p class="text-white/40 text-lg font-medium">I am the architect</p>
+           <p class="text-white text-xl font-bold bg-white/10 inline-block px-3 py-1 rounded-lg">Of my own destruction</p>
+           <p class="text-white/40 text-lg font-medium">I built these walls</p>
+           <p class="text-white/40 text-lg font-medium">Just to watch them fall</p>
+           <p class="text-white/40 text-lg font-medium">And now there's nothing left</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+  </style>
+</body>
+</html>
