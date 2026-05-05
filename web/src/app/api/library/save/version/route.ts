@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       .eq('SongId', songId)
       .eq('UserId', userId)
       .eq('YouTubeId', youTubeId)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return Response.json({

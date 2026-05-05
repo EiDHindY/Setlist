@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         .from('Songs')
         .select('*')
         .eq('AppleTrackId', appleTrackId)
-        .single();
+        .maybeSingle();
       song = data;
     }
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         .select('*')
         .eq('Title', title)
         .eq('Artist', artist)
-        .single();
+        .maybeSingle();
       song = data;
     }
 
@@ -73,6 +73,12 @@ export async function POST(req: Request) {
           Duration: duration ?? 0,
           CreatedBy: userId,
           CreatedAt: new Date().toISOString(),
+          PlayCount: 0,
+          TotalPlaySeconds: 0,
+          CollectionCount: 0,
+          MatchesWon: 0,
+          TournamentsWon: 0,
+          WinRate: 0,
         })
         .select()
         .single();
@@ -87,13 +93,20 @@ export async function POST(req: Request) {
       .select('SongId')
       .eq('UserId', userId)
       .eq('SongId', song.Id)
-      .single();
+      .maybeSingle();
 
     if (!existingUserSong) {
       await admin.from('UserSongs').insert({
         UserId: userId,
         SongId: song.Id,
         AddedAt: new Date().toISOString(),
+        PlayCount: 0,
+        TotalPlaySeconds: 0,
+        MatchesWon: 0,
+        TournamentsWon: 0,
+        WinRate: 0,
+        UserRating: 0,
+        MasteryLevel: 0,
       });
     }
 
@@ -120,8 +133,8 @@ export async function POST(req: Request) {
         duration: v.Duration ?? 0,
       })),
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[POST /api/library/save] Error:', err);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: err.message || JSON.stringify(err) }, { status: 500 });
   }
 }
