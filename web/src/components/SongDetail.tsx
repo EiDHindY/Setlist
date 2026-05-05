@@ -147,7 +147,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.06 }}
-                          className={`mb-3 rounded-xl border transition-smooth ${
+                          onClick={() => handlePlayVersion(version)}
+                          className={`mb-3 rounded-xl border transition-smooth cursor-pointer group ${
                             isCurrentlyPlaying
                               ? 'bg-[var(--sol-cyan)]/10 border-[var(--sol-cyan)]/30'
                               : 'bg-[var(--sol-base02)]/40 border-transparent hover:border-[var(--sol-base01)]/30 hover:bg-[var(--sol-base02)]/60'
@@ -155,11 +156,11 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                         >
                           <div className="flex items-center gap-3 px-4 py-3">
                             {/* Thumbnail */}
-                            <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-[var(--sol-base01)]/20">
+                            <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-[var(--sol-base01)]/20 relative">
                               <img
                                 src={thumbnailUrl}
                                 alt={version.title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-transform group-hover:scale-110"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).style.display = 'none';
                                 }}
@@ -168,7 +169,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
 
                             {/* Info */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-[var(--sol-base2)] text-[13px] font-semibold line-clamp-2 font-[family-name:var(--font-montserrat)]">
+                              <p className={`text-[13px] font-semibold line-clamp-2 font-[family-name:var(--font-montserrat)] transition-colors ${isCurrentlyPlaying ? 'text-[var(--sol-cyan)]' : 'text-[var(--sol-base2)] group-hover:text-white'}`}>
                                 {version.title}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1">
@@ -179,11 +180,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                               </div>
                             </div>
 
-                            {/* Play Button */}
-                            <button
-                              onClick={() => handlePlayVersion(version)}
-                              className="flex flex-col items-center gap-1 cursor-pointer transition-bounce hover:scale-110 active:scale-95"
-                            >
+                            {/* Play Indicator */}
+                            <div className="flex flex-col items-center gap-1 transition-bounce group-hover:scale-110 group-active:scale-95">
                               {isCurrentlyPlaying && state.isPlaying ? (
                                 <Pause
                                   size={28}
@@ -193,14 +191,14 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                               ) : (
                                 <Play
                                   size={28}
-                                  className={isCurrentlyPlaying ? "text-[var(--sol-cyan)]" : "text-[var(--sol-base01)] hover:text-[var(--sol-cyan)] transition-colors"}
+                                  className={isCurrentlyPlaying ? "text-[var(--sol-cyan)]" : "text-[var(--sol-base01)] group-hover:text-[var(--sol-cyan)] transition-colors"}
                                   fill="currentColor"
                                 />
                               )}
                               <span className={`${isCurrentlyPlaying ? 'text-[var(--sol-cyan)]/80' : 'text-[var(--sol-base01)]'} text-[10px] font-[family-name:var(--font-montserrat)]`}>
                                 {formatDuration(version.duration)}
                               </span>
-                            </button>
+                            </div>
                           </div>
                         </motion.div>
                       );
