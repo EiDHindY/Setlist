@@ -66,22 +66,17 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                 e.stopPropagation();
                 onBack();
               }}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
             >
               <ArrowLeft size={20} className="text-[var(--sol-cyan)]" />
             </button>
             
-            {/* Mobile Title */}
-            <h2 className="flex-1 text-center text-[var(--sol-cyan)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)] md:hidden">
-              COLLECTION
-            </h2>
-            
-            {/* Desktop Title */}
-            <h2 className="hidden md:block ml-2 text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)] truncate">
+            {/* Unified Title */}
+            <h2 className="flex-1 text-center md:text-left ml-2 md:ml-4 text-[var(--sol-base01)] text-[11px] md:text-sm font-[family-name:var(--font-montserrat)] truncate">
               Your collection of <span className="text-[var(--sol-cyan)] font-semibold">{song.title}</span> by <span className="text-[var(--sol-cyan)] font-semibold">{song.artist}</span>
             </h2>
 
-            <div className="w-9 md:hidden" /> {/* Spacer for alignment */}
+            <div className="w-10 flex-shrink-0 md:hidden" /> {/* Spacer for precise center alignment on mobile */}
           </div>
 
           {/* Song Header */}
