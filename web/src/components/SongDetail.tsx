@@ -82,6 +82,30 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
     }
   }, []);
 
+  // Swipe left/right to navigate tabs
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    // Only trigger if clearly horizontal (deltaX dominant) and big enough
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      if (deltaX < 0) {
+        // Swipe left → next tab
+        handleTabChange(Math.min(currentTab + 1, TABS.length - 1));
+      } else {
+        // Swipe right → previous tab
+        handleTabChange(Math.max(currentTab - 1, 0));
+      }
+    }
+  }, [currentTab, handleTabChange]);
+
   return (
     <>
       <div className="flex flex-col md:flex-row h-full w-full relative">
@@ -142,7 +166,11 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         </div>
 
         {/* ── RIGHT PANE: Tabs & Content ─────────────────────────── */}
-        <div className="relative flex-1 flex flex-col z-10 w-full md:w-1/2 md:bg-[var(--sol-base02)]/10 min-h-0">
+        <div
+          className="relative flex-1 flex flex-col z-10 w-full md:w-1/2 md:bg-[var(--sol-base02)]/10 min-h-0"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           
           {/* Desktop Only Tabs Header */}
           <div className="hidden md:flex p-6 pb-2 border-b border-[var(--sol-base01)]/20 shrink-0 justify-between items-center">
@@ -235,13 +263,15 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     })}
 
                     {/* Add Version Button — inline after last version */}
-                    <button
-                      onClick={() => setShowVersionSearch(true)}
-                      className="w-full flex items-center justify-center gap-2 py-4 mt-1 rounded-2xl border border-[var(--sol-cyan)]/30 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] font-bold tracking-wider text-sm transition-bounce hover:scale-[1.02] hover:bg-[var(--sol-cyan)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-outfit)]"
-                    >
-                      <PlusCircle size={20} />
-                      ADD VERSION
-                    </button>
+                    <div className="flex justify-center mt-3 mb-2">
+                      <button
+                        onClick={() => setShowVersionSearch(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--sol-cyan)]/30 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] font-bold tracking-wider text-xs transition-bounce hover:scale-[1.04] hover:bg-[var(--sol-cyan)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-outfit)]"
+                      >
+                        <PlusCircle size={16} />
+                        ADD VERSION
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center pb-24">
