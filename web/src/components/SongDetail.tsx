@@ -73,14 +73,17 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
     lastScrollY.current = currentY;
   }, []);
 
+  const [swipeDir, setSwipeDir] = useState<'left' | 'right'>('left');
+
   // Reset header visibility when switching away from lyrics tab
-  const handleTabChange = useCallback((id: number) => {
+  const handleTabChange = useCallback((id: number, dir?: 'left' | 'right') => {
+    setSwipeDir(dir ?? (id > currentTab ? 'left' : 'right'));
     setCurrentTab(id);
     if (id !== 1) {
       setHeaderVisible(true);
       lastScrollY.current = 0;
     }
-  }, []);
+  }, [currentTab]);
 
   // Swipe left/right to navigate tabs
   const touchStartX = useRef(0);
@@ -94,14 +97,11 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    // Only trigger if clearly horizontal (deltaX dominant) and big enough
     if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
       if (deltaX < 0) {
-        // Swipe left → next tab
-        handleTabChange(Math.min(currentTab + 1, TABS.length - 1));
+        handleTabChange(Math.min(currentTab + 1, TABS.length - 1), 'left');
       } else {
-        // Swipe right → previous tab
-        handleTabChange(Math.max(currentTab - 1, 0));
+        handleTabChange(Math.max(currentTab - 1, 0), 'right');
       }
     }
   }, [currentTab, handleTabChange]);
@@ -192,7 +192,22 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
           </div>
 
           {/* Tab Content Area */}
-          <div className="flex-1 overflow-y-auto relative px-2 md:px-6 md:pt-6">
+          <div className="flex-1 overflow-hidden relative px-2 md:px-6 md:pt-6">
+            <AnimatePresence mode="wait" custom={swipeDir}>
+              <motion.div
+                key={currentTab}
+                custom={swipeDir}
+                variants={{
+                  initial: (dir: string) => ({ opacity: 0, x: dir === 'left' ? 40 : -40 }),
+                  animate: { opacity: 1, x: 0 },
+                  exit: (dir: string) => ({ opacity: 0, x: dir === 'left' ? -40 : 40 }),
+                }}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                className="h-full overflow-y-auto"
+              >
             {currentTab === 0 ? (
               // ── Versions List ──
               <div className="flex flex-col h-full">
@@ -348,6 +363,8 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                 })()}
               </div>
             )}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Bottom Nav (Mobile Only) — absolute so it overlays content, no blank space when hidden */}
