@@ -65,6 +65,7 @@ export async function POST(req: Request) {
       const { data: newSong, error: insertErr } = await admin
         .from('Songs')
         .insert({
+          Id: crypto.randomUUID(),
           Title: title,
           Artist: artist,
           AlbumArtUrl: albumArtUrl ?? null,

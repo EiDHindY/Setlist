@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     const { data: version, error } = await admin
       .from('SongVersions')
       .insert({
+        Id: crypto.randomUUID(),
         SongId: songId,
         UserId: userId,
         YouTubeId: youTubeId,
