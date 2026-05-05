@@ -30,7 +30,30 @@ export default function Player() {
 
   const { song, version, isPlaying, isExpanded } = state;
 
+  // ── Lyrics State ────────────────────────────────────────────────────
+  const [lyricsData, setLyricsData] = useState<{ plain: string | null; source: string } | null>(null);
+  const [lyricsLoading, setLyricsLoading] = useState(false);
+  const [activePlayerTab, setActivePlayerTab] = useState<'lyrics' | 'upnext' | 'versions'>('lyrics');
+
   useHardwareBack(isExpanded, () => toggleExpand(), 'player_expanded');
+
+  // ── Fetch lyrics when player opens or song changes ────────────────
+  useEffect(() => {
+    if (!isExpanded || !song) return;
+    setLyricsData(null);
+    setLyricsLoading(true);
+
+    const params = new URLSearchParams({ title: song.title, artist: song.artist });
+    if (version?.duration) params.set('duration', String(version.duration));
+
+    fetch(`/api/lyrics?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setLyricsData({ plain: data.plain ?? null, source: data.source ?? 'unknown' });
+      })
+      .catch(() => setLyricsData({ plain: null, source: 'error' }))
+      .finally(() => setLyricsLoading(false));
+  }, [isExpanded, song?.title, song?.artist]);
 
   // 1. Load YouTube IFrame API
   useEffect(() => {
@@ -257,23 +280,73 @@ export default function Player() {
 
                {/* Tabs */}
                <div className="flex gap-6 border-b border-[var(--sol-base01)]/20 mb-6 relative">
-                 <button className="text-[var(--sol-cyan)] pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)] relative">
-                    LYRICS
-                    <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[var(--sol-cyan)]" />
-                 </button>
-                 <button className="text-[var(--sol-base01)] hover:text-white transition-colors pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">UP NEXT</button>
-                 <button className="text-[var(--sol-base01)] hover:text-white transition-colors pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">VERSIONS</button>
+                 {(['lyrics', 'upnext', 'versions'] as const).map((tab) => (
+                   <button
+                     key={tab}
+                     onClick={() => setActivePlayerTab(tab)}
+                     className={`pb-3 text-xs md:text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)] relative transition-colors ${
+                       activePlayerTab === tab
+                         ? 'text-[var(--sol-cyan)]'
+                         : 'text-[var(--sol-base01)] hover:text-white'
+                     }`}
+                   >
+                     {tab === 'lyrics' ? 'LYRICS' : tab === 'upnext' ? 'UP NEXT' : 'VERSIONS'}
+                     {activePlayerTab === tab && (
+                       <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[var(--sol-cyan)]" />
+                     )}
+                   </button>
+                 ))}
                </div>
 
-               {/* Tab Content (Lyrics Placeholder) */}
-               <div className="space-y-6 pt-2">
-                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">I am the architect</p>
-                  <p className="text-white text-2xl md:text-4xl font-bold bg-white/10 inline-block px-4 py-2 rounded-xl font-[family-name:var(--font-montserrat)] shadow-lg scale-105 origin-left transition-all">Of my own destruction</p>
-                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">I built these walls</p>
-                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">Just to watch them fall</p>
-                  <p className="text-white/40 text-xl md:text-3xl font-medium font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors hover:text-white/60">And now there's nothing left</p>
-                  <p className="text-[var(--sol-base01)] text-lg italic mt-12 mb-20 text-center font-[family-name:var(--font-outfit)]">End of lyrics</p>
-               </div>
+               {/* Tab Content */}
+               {activePlayerTab === 'lyrics' && (
+                 <div className="pb-20">
+                   {lyricsLoading && (
+                     <div className="flex flex-col items-center justify-center py-20 gap-4">
+                       <div className="w-8 h-8 border-2 border-[var(--sol-cyan)] border-t-transparent rounded-full animate-spin" />
+                       <p className="text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)]">Finding lyrics...</p>
+                     </div>
+                   )}
+
+                   {!lyricsLoading && !lyricsData?.plain && (
+                     <div className="flex flex-col items-center justify-center py-20 gap-3">
+                       <p className="text-[var(--sol-base01)] text-3xl">🎵</p>
+                       <p className="text-[var(--sol-base01)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">NO LYRICS FOUND</p>
+                       <p className="text-[var(--sol-base01)]/60 text-xs font-[family-name:var(--font-montserrat)] text-center max-w-[220px]">
+                         Couldn't find lyrics for this track on LRCLIB
+                       </p>
+                     </div>
+                   )}
+
+                   {!lyricsLoading && lyricsData?.plain && (
+                     <div className="space-y-1 pt-2">
+                       {lyricsData.plain.split('\n').map((line, i) => (
+                         <p
+                           key={i}
+                           className={`font-[family-name:var(--font-montserrat)] leading-relaxed transition-colors ${
+                             line.trim() === ''
+                               ? 'h-4'
+                               : 'text-white/60 text-lg md:text-2xl font-medium hover:text-white/90'
+                           }`}
+                         >
+                           {line || '\u00A0'}
+                         </p>
+                       ))}
+                       <p className="text-[var(--sol-base01)]/40 text-xs italic mt-12 text-center font-[family-name:var(--font-outfit)]">
+                         Lyrics via LRCLIB
+                       </p>
+                     </div>
+                   )}
+                 </div>
+               )}
+
+               {activePlayerTab !== 'lyrics' && (
+                 <div className="flex flex-col items-center justify-center py-20 gap-3">
+                   <p className="text-[var(--sol-base01)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">
+                     {activePlayerTab === 'upnext' ? 'UP NEXT' : 'VERSIONS'} COMING SOON
+                   </p>
+                 </div>
+               )}
             </div>
           </motion.div>
         )}
