@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 // ── LRCLIB & Genius Lyrics API Route ──────────────────────────────────
-// Queries LRCLIB first, falls back to Genius scraping.
+// Checks Database first, then LRCLIB, then falls back to Genius scraping.
 
 const LRCLIB_BASE = 'https://lrclib.net/api';
 
@@ -55,6 +56,7 @@ async function fetchGeniusLyrics(title: string, artist: string) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const songId = searchParams.get('songId');
   const title = searchParams.get('title');
   const artist = searchParams.get('artist');
   const duration = searchParams.get('duration');
@@ -63,7 +65,32 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'title and artist are required' }, { status: 400 });
   }
 
+  const supabase = createAdminClient();
+
   try {
+    // 0. CHECK DATABASE FIRST
+    if (songId) {
+      const { data: dbSong } = await supabase
+        .from('Songs')
+        .select('PlainLyrics, SyncedLyrics')
+        .eq('Id', songId)
+        .single();
+
+      if (dbSong && (dbSong.PlainLyrics || dbSong.SyncedLyrics)) {
+        return NextResponse.json({
+          synced: dbSong.SyncedLyrics,
+          plain: dbSong.PlainLyrics,
+          source: 'Database',
+          matchedTitle: title,
+          matchedArtist: artist,
+        });
+      }
+    }
+
+    let finalSynced: string | null = null;
+    let finalPlain: string | null = null;
+    let finalSource: string = 'None';
+
     // 1. TRY LRCLIB (Primary)
     const params = new URLSearchParams({ track_name: title, artist_name: artist });
     if (duration) params.set('duration', duration);
@@ -76,29 +103,43 @@ export async function GET(req: NextRequest) {
     if (lrcRes.ok) {
       const data = await lrcRes.json();
       if (data.plainLyrics || data.syncedLyrics) {
-        return NextResponse.json({
-          synced: data.syncedLyrics ?? null,
-          plain: data.plainLyrics ?? null,
-          source: 'LRCLIB',
-          matchedTitle: data.trackName,
-          matchedArtist: data.artistName,
-        });
+        finalSynced = data.syncedLyrics ?? null;
+        finalPlain = data.plainLyrics ?? null;
+        finalSource = 'LRCLIB';
       }
     }
 
     // 2. FALLBACK TO GENIUS
-    const geniusLyrics = await fetchGeniusLyrics(title, artist);
-    if (geniusLyrics) {
-      return NextResponse.json({
-        synced: null,
-        plain: geniusLyrics,
-        source: 'Genius',
-        matchedTitle: title,
-        matchedArtist: artist,
-      });
+    if (!finalPlain && !finalSynced) {
+      const geniusLyrics = await fetchGeniusLyrics(title, artist);
+      if (geniusLyrics) {
+        finalPlain = geniusLyrics;
+        finalSource = 'Genius';
+      }
     }
 
-    return NextResponse.json({ synced: null, plain: null, source: 'None' });
+    // 3. SAVE TO DATABASE (If we found anything and have a songId)
+    if (songId && (finalPlain || finalSynced)) {
+      const { error: updateError } = await supabase
+        .from('Songs')
+        .update({
+          PlainLyrics: finalPlain,
+          SyncedLyrics: finalSynced
+        })
+        .eq('Id', songId);
+        
+      if (updateError) {
+        console.error('Failed to save lyrics to database:', updateError);
+      }
+    }
+
+    return NextResponse.json({
+      synced: finalSynced,
+      plain: finalPlain,
+      source: finalSource,
+      matchedTitle: title,
+      matchedArtist: artist,
+    });
 
   } catch (error) {
     console.error('Lyrics fetch error:', error);

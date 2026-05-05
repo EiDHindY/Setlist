@@ -45,7 +45,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
     if (currentTab !== 1) return;
     if (lyricsData !== null) return; // Already fetched
     setLyricsLoading(true);
-    const params = new URLSearchParams({ title: song.title, artist: song.artist });
+    const params = new URLSearchParams({ songId: song.id, title: song.title, artist: song.artist });
     fetch(`/api/lyrics?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => setLyricsData({ plain: data.plain ?? null, source: data.source ?? 'Unknown' }))
