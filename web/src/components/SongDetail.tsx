@@ -113,38 +113,30 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             <div className="w-10 flex-shrink-0 md:hidden" />
           </div>
 
-          {/* Song Header — clip wrapper hides the sliding content on mobile */}
-          <div className="overflow-hidden md:overflow-visible flex-shrink-0">
+          {/* Song Header — always visible, static */}
+          <div className="px-5 pb-5 flex md:flex-col items-start md:items-center gap-4 flex-shrink-0 w-full">
+            {/* Album Art */}
             <div
-              className="px-5 pb-5 flex md:flex-col items-start md:items-center gap-4 w-full will-change-transform"
-              style={{
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: headerVisible ? 'translateY(0)' : 'translateY(-110%)',
-              }}
+              className="w-20 h-20 md:w-64 md:h-64 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] md:shadow-2xl md:mb-6 cursor-pointer transition-bounce hover:scale-105 mx-auto md:mx-0"
+              onClick={() => setArtworkExpanded(true)}
             >
-              {/* Album Art */}
-              <div
-                className="w-20 h-20 md:w-64 md:h-64 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 shadow-[0_8px_15px_rgba(0,0,0,0.3)] md:shadow-2xl md:mb-6 cursor-pointer transition-bounce hover:scale-105 mx-auto md:mx-0"
-                onClick={() => setArtworkExpanded(true)}
-              >
-                {song.albumArt ? (
-                  <img src={song.albumArt} alt={song.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center border border-[var(--sol-base01)]/30">
-                    <Music size={36} className="text-[var(--sol-base01)] md:w-20 md:h-20" />
-                  </div>
-                )}
-              </div>
+              {song.albumArt ? (
+                <img src={song.albumArt} alt={song.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-[var(--sol-base02)] flex items-center justify-center border border-[var(--sol-base01)]/30">
+                  <Music size={36} className="text-[var(--sol-base01)] md:w-20 md:h-20" />
+                </div>
+              )}
+            </div>
 
-              {/* Info */}
-              <div className="flex-1 md:flex-none min-w-0 pt-1 md:pt-0 text-left md:text-center w-full">
-                <h1 className="text-[var(--sol-base3)] text-xl md:text-4xl font-bold truncate md:whitespace-normal font-[family-name:var(--font-montserrat)] md:mb-2">
-                  {song.title}
-                </h1>
-                <p className="text-[var(--sol-base0)] text-sm md:text-xl mt-1 md:mt-0 font-[family-name:var(--font-montserrat)] md:mb-10">
-                  {song.artist}
-                </p>
-              </div>
+            {/* Info */}
+            <div className="flex-1 md:flex-none min-w-0 pt-1 md:pt-0 text-left md:text-center w-full">
+              <h1 className="text-[var(--sol-base3)] text-xl md:text-4xl font-bold truncate md:whitespace-normal font-[family-name:var(--font-montserrat)] md:mb-2">
+                {song.title}
+              </h1>
+              <p className="text-[var(--sol-base0)] text-sm md:text-xl mt-1 md:mt-0 font-[family-name:var(--font-montserrat)] md:mb-10">
+                {song.artist}
+              </p>
             </div>
           </div>
         </div>
@@ -327,9 +319,9 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             )}
           </div>
 
-          {/* Bottom Nav (Mobile Only) */}
+          {/* Bottom Nav (Mobile Only) — absolute so it overlays content, no blank space when hidden */}
           <div
-            className="relative flex-shrink-0 z-10 w-full md:hidden will-change-transform"
+            className="absolute bottom-0 left-0 right-0 z-20 md:hidden will-change-transform"
             style={{
               transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               transform: headerVisible ? 'translateY(0)' : 'translateY(100%)',
