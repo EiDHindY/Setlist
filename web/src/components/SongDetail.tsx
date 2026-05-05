@@ -59,7 +59,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         {/* ── LEFT PANE: Album Art & Header ──────────────────────── */}
         <div className="relative flex flex-col w-full md:w-1/2 flex-shrink-0 z-10 md:border-r md:border-[var(--sol-base01)]/20 md:items-center md:justify-center md:p-12">
           {/* Top Bar (Mobile: Standard, Desktop: Absolute Back Button) */}
-          <div className="flex items-center px-4 py-3 flex-shrink-0 md:absolute md:top-4 md:left-4 md:w-full">
+          <div className="flex items-center px-4 py-3 flex-shrink-0 md:absolute md:top-4 md:left-4 md:w-[calc(100%-2rem)]">
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -70,9 +70,17 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             >
               <ArrowLeft size={20} className="text-[var(--sol-cyan)]" />
             </button>
+            
+            {/* Mobile Title */}
             <h2 className="flex-1 text-center text-[var(--sol-cyan)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)] md:hidden">
               COLLECTION
             </h2>
+            
+            {/* Desktop Title */}
+            <h2 className="hidden md:block ml-2 text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)] truncate">
+              Your collection of <span className="text-[var(--sol-cyan)] font-semibold">{song.title}</span> by <span className="text-[var(--sol-cyan)] font-semibold">{song.artist}</span>
+            </h2>
+
             <div className="w-9 md:hidden" /> {/* Spacer for alignment */}
           </div>
 
