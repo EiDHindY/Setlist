@@ -29,8 +29,11 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
     // Push this modal onto the global stack
     modalStack.push(modalId);
 
-    // Push state immediately to create a history entry
-    window.history.pushState({ ...window.history.state, modalId }, '');
+    // Push state to create a history entry.
+    // IMPORTANT: Explicitly exclude tab-history fields (isTrap, tab, sub) so that
+    // useTabHistory's popstate guard does not misread this as a tab-change event.
+    const { isTrap: _isTrap, tab: _tab, sub: _sub, ...safeState } = window.history.state || {};
+    window.history.pushState({ ...safeState, modalId }, '');
 
     const handlePopState = (e: PopStateEvent) => {
       if (isProgrammaticBack) return;

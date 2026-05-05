@@ -53,8 +53,10 @@ export function useTabHistory(defaultTab = 0, defaultSub = 'songs', onExitReques
         return;
       }
 
-      // Check if this popstate event contains our tab state
-      if (e.state && typeof e.state.tab === 'number') {
+      // GUARD: Only handle popstate events that were explicitly pushed by useTabHistory.
+      // States pushed by useHardwareBack only contain `modalId`, not `isTrap: false`,
+      // so we safely ignore them here to prevent ghost tab resets.
+      if (e.state && e.state.isTrap === false && typeof e.state.tab === 'number') {
         isPopStateRef.current = true;
         setActiveTab(e.state.tab);
         setActiveSubTab(e.state.sub || defaultSub);
