@@ -1,4 +1,12 @@
-import { Home, User, Music2, ListMusic, Mic2, Disc3, Sliders, Headphones, LucideIcon } from 'lucide-react';
+import Home from 'lucide-react/dist/esm/icons/home';
+import User from 'lucide-react/dist/esm/icons/user';
+import Music2 from 'lucide-react/dist/esm/icons/music-2';
+import ListMusic from 'lucide-react/dist/esm/icons/list-music';
+import Mic2 from 'lucide-react/dist/esm/icons/mic-2';
+import Disc3 from 'lucide-react/dist/esm/icons/disc-3';
+import Sliders from 'lucide-react/dist/esm/icons/sliders';
+import Headphones from 'lucide-react/dist/esm/icons/headphones';
+import type { LucideIcon } from 'lucide-react';
 import BumpingHeadphonesIcon from '../icons/BumpingHeadphonesIcon';
 import BleedingClashIcon from '../icons/BleedingClashIcon';
 import SyncedHeadsetsIcon from '../icons/SyncedHeadsetsIcon';

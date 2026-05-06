@@ -4,7 +4,8 @@
 // Custom "Install Setlist" prompt that replaces the browser's default.
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X } from 'lucide-react';
+import Download from 'lucide-react/dist/esm/icons/download';
+import X from 'lucide-react/dist/esm/icons/x';
 import { useInstallPrompt } from '@/hooks/useNative';
 import { useState } from 'react';
 

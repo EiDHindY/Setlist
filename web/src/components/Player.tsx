@@ -6,7 +6,14 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, Maximize2, Minimize2, Music2, Loader2, ChevronDown } from 'lucide-react';
+import X from 'lucide-react/dist/esm/icons/x';
+import Play from 'lucide-react/dist/esm/icons/play';
+import Pause from 'lucide-react/dist/esm/icons/pause';
+import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2';
+import Minimize2 from 'lucide-react/dist/esm/icons/minimize-2';
+import Music2 from 'lucide-react/dist/esm/icons/music-2';
+import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import { useMediaSession, useWakeLock, hapticTap } from '@/hooks/useNative';
 import { useHardwareBack } from '@/hooks/useHardwareBack';

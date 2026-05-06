@@ -4,7 +4,7 @@
 // Port of mobile/lib/widgets/under_development_state.dart
 
 import { motion } from 'framer-motion';
-import { Construction } from 'lucide-react';
+import Construction from 'lucide-react/dist/esm/icons/construction';
 import type { LucideIcon } from 'lucide-react';
 
 interface UnderDevelopmentProps {

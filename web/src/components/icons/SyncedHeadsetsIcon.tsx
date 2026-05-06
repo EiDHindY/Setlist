@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users } from 'lucide-react';
+import Users from 'lucide-react/dist/esm/icons/users';
 
 export default function SyncedHeadsetsIcon({ isActive, size = 26 }: { isActive: boolean; size?: number }) {
   return (

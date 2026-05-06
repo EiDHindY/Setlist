@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Music2 } from 'lucide-react';
+import Music2 from 'lucide-react/dist/esm/icons/music-2';
 
 export default function BleedingClashIcon({ isActive, size = 26 }: { isActive: boolean; size?: number }) {
   const themeColor = isActive ? '#d33682' : 'rgba(88, 110, 117, 0.8)';
