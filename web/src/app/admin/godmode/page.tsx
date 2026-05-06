@@ -1,8 +1,10 @@
+'use client';
 export const runtime = 'edge';
+import dynamic from "next/dynamic";
 
-import StatsPanel from "@/components/admin/StatsPanel";
-import LiveFeed from "@/components/admin/LiveFeed";
-import OnlineUsers from "@/components/admin/OnlineUsers";
+const StatsPanel = dynamic(() => import("@/components/admin/StatsPanel"), { ssr: false });
+const LiveFeed = dynamic(() => import("@/components/admin/LiveFeed"), { ssr: false });
+const OnlineUsers = dynamic(() => import("@/components/admin/OnlineUsers"), { ssr: false });
 
 export default function GodModePage() {
   return (

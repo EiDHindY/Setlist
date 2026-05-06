@@ -18,7 +18,17 @@ try {
 }
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  // Disabling the compiler for now to save space on the Edge Worker
+  reactCompiler: false,
+  
+  // Force transpile these to ensure they are tree-shaken correctly
+  transpilePackages: ['lucide-react', 'framer-motion'],
+  
+  // Aggressively tree-shake these heavy libraries
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+
   env: {
     NEXT_PUBLIC_BUILD_SHA: buildSha,
     NEXT_PUBLIC_BUILD_BRANCH: buildBranch,

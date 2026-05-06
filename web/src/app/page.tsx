@@ -3,6 +3,7 @@
 // ── MAIN PAGE ───────────────────────────────────────────────────────
 // Wires together: Auth → SideNav → Library → Search → Song Detail → Player
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/utils/supabase";
@@ -13,17 +14,19 @@ import AnimatedLogo from "@/components/AnimatedLogo";
 import AnimatedLoader from "@/components/AnimatedLoader";
 import SplashScreen from "@/components/SplashScreen";
 import SideNav from "@/components/SideNav";
-import Library from "@/components/Library";
-import SearchModal from "@/components/SearchModal";
-import SongDetail from "@/components/SongDetail";
 import Player from "@/components/Player";
-import ProfilePanel from "@/components/ProfilePanel";
 import UnderDevelopment from "@/components/UnderDevelopment";
 import InstallBanner from "@/components/InstallBanner";
 import { syncUserWithBackend } from "@/services/auth";
 import type { Song } from "@/types/song";
 import { useTabHistory } from "@/hooks/useTabHistory";
 import { usePresence } from "@/hooks/usePresence";
+
+// Dynamic imports to reduce Edge Worker bundle size
+const Library = dynamic(() => import("@/components/Library"), { ssr: false });
+const SearchModal = dynamic(() => import("@/components/SearchModal"), { ssr: false });
+const SongDetail = dynamic(() => import("@/components/SongDetail"), { ssr: false });
+const ProfilePanel = dynamic(() => import("@/components/ProfilePanel"), { ssr: false });
 
 export default function HomePage() {
   // ── Auth State ────────────────────────────────────────────────────
