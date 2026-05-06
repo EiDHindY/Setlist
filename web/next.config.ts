@@ -24,6 +24,13 @@ const nextConfig: NextConfig = {
   // Aggressively tree-shake these heavy libraries
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    // BLOCK the heavy CSS compiler and WASM runtimes from the worker
+    serverComponentsExternalPackages: [
+      'lightningcss',
+      '@emnapi/core',
+      '@emnapi/runtime',
+      'fsevents'
+    ],
   },
 
   env: {
