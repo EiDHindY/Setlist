@@ -97,6 +97,26 @@ export default function ProfilePanel({ session }: ProfilePanelProps) {
           <LogOut size={16} />
           Sign Out
         </button>
+
+        {/* Build Identity */}
+        <div className="mt-8 text-center">
+          <a
+            href={`https://github.com/EiDHindY/Setlist/commit/${process.env.NEXT_PUBLIC_BUILD_SHA}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/15 hover:border-[var(--sol-cyan)]/30 transition-colors"
+            title={`Built at ${process.env.NEXT_PUBLIC_BUILD_TIME}`}
+          >
+            <span className="text-[var(--sol-base01)] text-[10px] font-mono">build</span>
+            <span className="text-[var(--sol-cyan)] text-[10px] font-mono font-bold">
+              {process.env.NEXT_PUBLIC_BUILD_BRANCH ?? 'local'}
+            </span>
+            <span className="text-[var(--sol-base01)] text-[10px] font-mono">@</span>
+            <span className="text-[var(--sol-yellow)] text-[10px] font-mono font-bold">
+              {process.env.NEXT_PUBLIC_BUILD_SHA ?? 'dev'}
+            </span>
+          </a>
+        </div>
       </motion.div>
     </div>
   );

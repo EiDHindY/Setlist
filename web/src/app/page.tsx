@@ -6,6 +6,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/utils/supabase";
+import { useLibraryStore } from "@/store/libraryStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Swords, PartyPopper, LogOut } from "lucide-react";
 import AnimatedLogo from "@/components/AnimatedLogo";
@@ -22,6 +23,7 @@ import InstallBanner from "@/components/InstallBanner";
 import { syncUserWithBackend } from "@/services/auth";
 import type { Song } from "@/types/song";
 import { useTabHistory } from "@/hooks/useTabHistory";
+import { usePresence } from "@/hooks/usePresence";
 
 export default function HomePage() {
   // ── Auth State ────────────────────────────────────────────────────
@@ -104,14 +106,29 @@ export default function HomePage() {
     }
   }, [session, synced]);
 
+  // Broadcast presence while app is open
+  const sessionUser = (session as Record<string, Record<string, Record<string, string>>> | null);
+  usePresence(
+    sessionUser?.user?.id ?? null,
+    sessionUser?.user?.user_metadata?.full_name ?? null
+  );
+
   const handleSongAdded = useCallback((song: Song) => {
     setLibraryKey((k) => k + 1);
     setSelectedSong(song);
   }, []);
 
   const handleSongUpdated = useCallback(() => {
+    const userId = (session as Record<string, Record<string, string>> | null)?.user?.id;
     setLibraryKey((k) => k + 1);
-  }, []);
+    if (!userId || !selectedSong) return;
+    // Force-refresh the store, then re-derive selectedSong so SongDetail
+    // immediately shows any newly added versions without requiring a page reload.
+    useLibraryStore.getState().fetchLibrary(userId, true).then(() => {
+      const refreshed = useLibraryStore.getState().songs.find((s) => s.id === selectedSong.id);
+      if (refreshed) setSelectedSong(refreshed);
+    });
+  }, [session, selectedSong]);
 
   const handleTabChange = useCallback((tabId: number) => {
     setActiveTab(tabId);

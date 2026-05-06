@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, ExternalLink, Loader2, Eye, Clock, CheckCircle, PlusCircle, User } from 'lucide-react';
 import type { Song, YouTubeSearchResult } from '@/types/song';
 import { supabase } from '@/utils/supabase';
+import { useLibraryStore } from '@/store/libraryStore';
 import { searchYouTube, getVideoDetails, extractVideoId } from '@/services/youtube-search';
 import { saveVersion } from '@/services/library';
 import { formatDuration, formatViewCount } from '@/types/song';
@@ -93,6 +94,9 @@ export default function VersionSearch({ song, isOpen, onClose }: VersionSearchPr
     if (success) {
       setLocallyAddedIds((prev) => new Set(prev).add(result.videoId));
       setAnyAdded(true);
+      // Force-sync the library store so the new version appears immediately
+      // without waiting for the 5-minute cache window to expire.
+      useLibraryStore.getState().fetchLibrary(user.id, true);
     }
   };
 
