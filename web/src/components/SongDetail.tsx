@@ -6,10 +6,22 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ArrowLeft, PlusCircle, Play, Pause, Music, Disc3, Mic2,
-  Users, BarChart3, ListMusic, User, AlignLeft, Clock, Languages, FilePenLine, ChevronRight
-} from 'lucide-react';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
+import PlusCircle from 'lucide-react/dist/esm/icons/plus-circle';
+import Play from 'lucide-react/dist/esm/icons/play';
+import Pause from 'lucide-react/dist/esm/icons/pause';
+import Music from 'lucide-react/dist/esm/icons/music';
+import Disc3 from 'lucide-react/dist/esm/icons/disc-3';
+import Mic2 from 'lucide-react/dist/esm/icons/mic-2';
+import Users from 'lucide-react/dist/esm/icons/users';
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
+import ListMusic from 'lucide-react/dist/esm/icons/list-music';
+import User from 'lucide-react/dist/esm/icons/user';
+import AlignLeft from 'lucide-react/dist/esm/icons/align-left';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import Languages from 'lucide-react/dist/esm/icons/languages';
+import FilePenLine from 'lucide-react/dist/esm/icons/file-pen-line';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import type { Song, SongVersion } from '@/types/song';
 import { formatDuration } from '@/types/song';
 import { usePlayback } from '@/contexts/PlaybackContext';

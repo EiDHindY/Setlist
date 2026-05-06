@@ -6,7 +6,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ArrowLeft, Music, Loader2, ChevronRight } from 'lucide-react';
+import Search from 'lucide-react/dist/esm/icons/search';
+import X from 'lucide-react/dist/esm/icons/x';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
+import Music from 'lucide-react/dist/esm/icons/music';
+import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import type { SearchSuggestion, Song } from '@/types/song';
 import { supabase } from '@/utils/supabase';
 import {

@@ -4,7 +4,10 @@
 // Port of mobile/lib/screens/profile_screen.dart
 
 import { motion } from 'framer-motion';
-import { LogOut, Mail, Shield, Globe } from 'lucide-react';
+import LogOut from 'lucide-react/dist/esm/icons/log-out';
+import Mail from 'lucide-react/dist/esm/icons/mail';
+import Shield from 'lucide-react/dist/esm/icons/shield';
+import Globe from 'lucide-react/dist/esm/icons/globe';
 import { supabase } from '@/utils/supabase';
 
 interface ProfilePanelProps {

@@ -6,7 +6,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, ExternalLink, Loader2, Eye, Clock, CheckCircle, PlusCircle, User } from 'lucide-react';
+import X from 'lucide-react/dist/esm/icons/x';
+import Search from 'lucide-react/dist/esm/icons/search';
+import ExternalLink from 'lucide-react/dist/esm/icons/external-link';
+import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import Eye from 'lucide-react/dist/esm/icons/eye';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import PlusCircle from 'lucide-react/dist/esm/icons/plus-circle';
+import User from 'lucide-react/dist/esm/icons/user';
 import type { Song, YouTubeSearchResult } from '@/types/song';
 import { supabase } from '@/utils/supabase';
 import { useLibraryStore } from '@/store/libraryStore';

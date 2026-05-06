@@ -8,7 +8,18 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Music, Trash2, MoreVertical, ChevronRight, Loader2, RefreshCw, Mic2, Disc3, BarChart3, Layers } from 'lucide-react';
+import Search from 'lucide-react/dist/esm/icons/search';
+import Plus from 'lucide-react/dist/esm/icons/plus';
+import Music from 'lucide-react/dist/esm/icons/music';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import MoreVertical from 'lucide-react/dist/esm/icons/more-vertical';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
+import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
+import Mic2 from 'lucide-react/dist/esm/icons/mic-2';
+import Disc3 from 'lucide-react/dist/esm/icons/disc-3';
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
+import Layers from 'lucide-react/dist/esm/icons/layers';
 import type { Song } from '@/types/song';
 import { supabase } from '@/utils/supabase';
 import { useLibraryStore } from '@/store/libraryStore';
