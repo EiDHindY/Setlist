@@ -1,5 +1,5 @@
 'use client';
-export const runtime = 'edge';
+
 import dynamic from "next/dynamic";
 
 const StatsPanel = dynamic(() => import("@/components/admin/StatsPanel"), { ssr: false });

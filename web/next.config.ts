@@ -18,21 +18,10 @@ try {
 }
 
 const nextConfig: NextConfig = {
-  // Disabling the compiler for now to save space on the Edge Worker
-  reactCompiler: false,
-
-  // KILL the 9MB Source Maps that are bloating the worker
-  productionBrowserSourceMaps: false,
+  // Re-enabling the React Compiler for maximum performance on Vercel
+  reactCompiler: true,
   
-  // New Next.js 16 location for external packages
-  serverExternalPackages: [
-    'lightningcss',
-    '@emnapi/core',
-    '@emnapi/runtime',
-    'fsevents'
-  ],
-
-  // Aggressively tree-shake these heavy libraries
+  // Keep the aggressive tree-shaking for libraries as it's good practice
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
