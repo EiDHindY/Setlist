@@ -20,17 +20,21 @@ try {
 const nextConfig: NextConfig = {
   // Disabling the compiler for now to save space on the Edge Worker
   reactCompiler: false,
+
+  // KILL the 9MB Source Maps that are bloating the worker
+  productionBrowserSourceMaps: false,
   
+  // New Next.js 16 location for external packages
+  serverExternalPackages: [
+    'lightningcss',
+    '@emnapi/core',
+    '@emnapi/runtime',
+    'fsevents'
+  ],
+
   // Aggressively tree-shake these heavy libraries
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
-    // BLOCK the heavy CSS compiler and WASM runtimes from the worker
-    serverComponentsExternalPackages: [
-      'lightningcss',
-      '@emnapi/core',
-      '@emnapi/runtime',
-      'fsevents'
-    ],
   },
 
   env: {
