@@ -107,7 +107,12 @@ export default function HomePage() {
   }, [session, synced]);
 
   // Broadcast presence while app is open
-  const sessionUser = (session as Record<string, Record<string, Record<string, string>>> | null);
+  const sessionUser = (session as {
+    user?: {
+      id?: string;
+      user_metadata?: { full_name?: string };
+    };
+  } | null);
   usePresence(
     sessionUser?.user?.id ?? null,
     sessionUser?.user?.user_metadata?.full_name ?? null
