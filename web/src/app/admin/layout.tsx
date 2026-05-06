@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { ReactNode } from "react";
 
 const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev";

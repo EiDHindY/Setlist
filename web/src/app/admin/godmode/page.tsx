@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 import StatsPanel from "@/components/admin/StatsPanel";
 import LiveFeed from "@/components/admin/LiveFeed";
 import OnlineUsers from "@/components/admin/OnlineUsers";
