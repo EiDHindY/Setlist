@@ -20,7 +20,8 @@ export default function OnlineUsers() {
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<OnlineUser>();
         const online: OnlineUser[] = Object.values(state)
-          .flat()
+          .map((presences: any) => presences[0])
+          .filter(Boolean)
           .map((p: any) => ({
             userId: p.userId,
             displayName: p.displayName,
