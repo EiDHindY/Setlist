@@ -406,6 +406,9 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
               transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               transform: headerVisible ? 'translateY(0)' : 'translateY(100%)',
             }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             <div className="glass-heavy border-t border-[var(--sol-cyan)]/20 overflow-hidden relative min-h-[64px] flex items-center">
               <AnimatePresence mode="wait">
@@ -419,7 +422,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x < -40) setIsDeepOpen(false);
+                      if (info.offset.x > 40) setIsDeepOpen(false);
                     }}
                     className="flex items-center w-full justify-around px-2 py-2"
                   >
@@ -466,7 +469,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x > 40 && currentTab === 1) setIsDeepOpen(true);
+                      if (info.offset.x < -40 && currentTab === 1) setIsDeepOpen(true);
                     }}
                     className="flex items-center justify-around w-full max-w-2xl mx-auto px-2 py-2"
                   >
