@@ -9,6 +9,7 @@ import Mail from 'lucide-react/dist/esm/icons/mail';
 import Shield from 'lucide-react/dist/esm/icons/shield';
 import Globe from 'lucide-react/dist/esm/icons/globe';
 import { supabase } from '@/utils/supabase';
+import BugReportButton from '@/components/BugReportButton';
 
 interface ProfilePanelProps {
   session: {
@@ -90,6 +91,8 @@ export default function ProfilePanel({ session }: ProfilePanelProps) {
               </p>
             </div>
           </div>
+          
+          <BugReportButton />
         </div>
 
         {/* Sign Out */}
@@ -102,22 +105,23 @@ export default function ProfilePanel({ session }: ProfilePanelProps) {
         </button>
 
         {/* Build Identity */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex justify-center">
           <a
             href={`https://github.com/EiDHindY/Setlist/commit/${process.env.NEXT_PUBLIC_BUILD_SHA}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/15 hover:border-[var(--sol-cyan)]/30 transition-colors"
-            title={`Built at ${process.env.NEXT_PUBLIC_BUILD_TIME}`}
+            className="group flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/15 hover:border-[var(--sol-cyan)]/30 transition-all max-w-[90%]"
+            title={`Commit ${process.env.NEXT_PUBLIC_BUILD_SHA} at ${process.env.NEXT_PUBLIC_BUILD_TIME}`}
           >
-            <span className="text-[var(--sol-base01)] text-[10px] font-mono">build</span>
-            <span className="text-[var(--sol-cyan)] text-[10px] font-mono font-bold">
-              {process.env.NEXT_PUBLIC_BUILD_BRANCH ?? 'local'}
-            </span>
-            <span className="text-[var(--sol-base01)] text-[10px] font-mono">@</span>
-            <span className="text-[var(--sol-yellow)] text-[10px] font-mono font-bold">
-              {process.env.NEXT_PUBLIC_BUILD_SHA ?? 'dev'}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[var(--sol-base01)] text-[10px] font-mono">branch</span>
+              <span className="text-[var(--sol-cyan)] text-[10px] font-mono font-bold">
+                {process.env.NEXT_PUBLIC_BUILD_BRANCH ?? 'local'}
+              </span>
+            </div>
+            <p className="text-[var(--sol-base1)] text-xs text-center font-[family-name:var(--font-montserrat)] line-clamp-2 group-hover:text-[var(--sol-cyan)] transition-colors italic">
+              "{process.env.NEXT_PUBLIC_BUILD_MESSAGE ?? 'Development Build'}"
+            </p>
           </a>
         </div>
       </motion.div>
