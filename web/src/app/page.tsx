@@ -50,7 +50,6 @@ export default function HomePage() {
   const [showSearch, setShowSearch] = useState(false);
   const [sharedQuery, setSharedQuery] = useState<string | undefined>(undefined);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-  const [libraryKey, setLibraryKey] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -125,13 +124,11 @@ export default function HomePage() {
   );
 
   const handleSongAdded = useCallback((song: Song) => {
-    setLibraryKey((k) => k + 1);
     setSelectedSong(song);
   }, []);
 
   const handleSongUpdated = useCallback(() => {
     const userId = (session as Record<string, Record<string, string>> | null)?.user?.id;
-    setLibraryKey((k) => k + 1);
     if (!userId || !selectedSong) return;
     // Force-refresh the store, then re-derive selectedSong so SongDetail
     // immediately shows any newly added versions without requiring a page reload.
@@ -159,25 +156,7 @@ export default function HomePage() {
 
   // ── RENDER CONTENT BASED ON ACTIVE TAB ────────────────────────────
   const renderContent = () => {
-    // If a song is selected (from Collection tab), show detail
-    if (selectedSong && activeTab === 1) {
-      return (
-        <motion.div
-          key="detail"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.25 }}
-          className="h-full relative"
-        >
-          <SongDetail
-            song={selectedSong}
-            onBack={() => setSelectedSong(null)}
-            onSongUpdated={handleSongUpdated}
-          />
-        </motion.div>
-      );
-    }
+
 
     switch (activeTab) {
       case 0: // HOME
@@ -200,7 +179,7 @@ export default function HomePage() {
       case 1: // COLLECTION (Library)
         return (
           <motion.div
-            key={`library-${libraryKey}`}
+            key="library-tab"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 30 }}
@@ -214,6 +193,27 @@ export default function HomePage() {
               activeSubTab={activeSubTab}
               onSubTabChange={setActiveSubTab}
             />
+            <AnimatePresence>
+              {selectedSong && (
+                <motion.div
+                  key="detail"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 50 }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute inset-0 z-50 bg-[var(--sol-base03)]"
+                >
+                  <SongDetail
+                    song={selectedSong}
+                    onBack={() => {
+                      setSelectedSong(null);
+                      setActiveTab(1); // Force tab back to Collection
+                    }}
+                    onSongUpdated={handleSongUpdated}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         );
 

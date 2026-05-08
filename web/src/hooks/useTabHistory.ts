@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getIsProgrammaticBack, getActiveModalCount } from './useHardwareBack';
 
 /**
  * Hook to manage tab and sub-tab state, syncing it with the browser's history API.
@@ -43,6 +44,8 @@ export function useTabHistory(defaultTab = 0, defaultSub = 'songs', onExitReques
 
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
+      if (getIsProgrammaticBack() || getActiveModalCount() > 0) return;
+
       if (e.state?.isTrap) {
         // User hit the back button at the very root!
         if (onExitRequest) {

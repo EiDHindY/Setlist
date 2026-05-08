@@ -132,8 +132,12 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         // Swipe left -> Next tab
         handleTabChange(Math.min(currentTab + 1, TABS.length - 1), 'left');
       } else {
-        // Swipe right -> Previous tab
-        handleTabChange(Math.max(currentTab - 1, 0), 'right');
+        // Swipe right -> Previous tab or go back to collection
+        if (currentTab === 0) {
+          onBack();
+        } else {
+          handleTabChange(currentTab - 1, 'right');
+        }
       }
     }
   }, [currentTab, handleTabChange]);
@@ -422,7 +426,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x > 40) setIsDeepOpen(false);
+                      if (info.offset.x < -40) setIsDeepOpen(false);
                     }}
                     className="flex items-center w-full justify-around px-2 py-2"
                   >
@@ -469,7 +473,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x < -40 && currentTab === 1) setIsDeepOpen(true);
+                      if (info.offset.x > 40 && currentTab === 1) setIsDeepOpen(true);
                     }}
                     className="flex items-center justify-around w-full max-w-2xl mx-auto px-2 py-2"
                   >

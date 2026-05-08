@@ -2,19 +2,20 @@
 
 import { useEffect, useRef } from 'react';
 
+// Global flag to prevent programmatic history pops from triggering listeners
+let isProgrammaticBack = false;
+export const getIsProgrammaticBack = () => isProgrammaticBack;
+
+// Global counter of open modals. If > 0, useTabHistory should ignore popstate events
+let activeModalCount = 0;
+export const getActiveModalCount = () => activeModalCount;
+
 // Global stack to track open modals in order
 const modalStack: string[] = [];
 
-// Global flag to prevent programmatic history pops from triggering other listeners
-let isProgrammaticBack = false;
-
 /**
  * Hook to manage mobile hardware back button/swipe back gesture.
- * Uses an in-memory stack to ensure only the topmost modal/overlay responds to a back action.
- * 
- * @param isOpen Whether the modal/overlay is currently open
- * @param onClose Callback to close the modal/overlay
- * @param modalId A string identifier for debugging/differentiating
+ * Uses history.pushState to intercept the back gesture safely.
  */
 export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: string) {
   const onCloseRef = useRef(onClose);
@@ -26,48 +27,48 @@ export function useHardwareBack(isOpen: boolean, onClose: () => void, modalId: s
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined') return;
 
-    // Push this modal onto the global stack
+    activeModalCount++;
     modalStack.push(modalId);
 
-    // Push state to create a history entry.
-    // IMPORTANT: Explicitly exclude tab-history fields (isTrap, tab, sub) so that
-    // useTabHistory's popstate guard does not misread this as a tab-change event.
-    const { isTrap: _isTrap, tab: _tab, sub: _sub, ...safeState } = window.history.state || {};
-    window.history.pushState({ ...safeState, modalId }, '');
+    // Push a new state with our modalId.
+    // We KEEP the existing Next.js state and tab history state, so the history stack remains pristine.
+    window.history.pushState({ ...window.history.state, modalId }, '');
+
+    let poppedByBrowser = false;
 
     const handlePopState = (e: PopStateEvent) => {
       if (isProgrammaticBack) return;
-
-      // Only respond if THIS modal is at the top of the stack
+      
+      // If THIS modal is at the top of the stack, the user pressed back
       if (modalStack[modalStack.length - 1] === modalId) {
+        poppedByBrowser = true;
         onCloseRef.current();
-        // Do not pop from modalStack here; it will be removed in the cleanup effect
-        // when isOpen becomes false.
       }
     };
 
+    // Delay listener registration slightly so we don't catch any immediate popstates from rapid navigations
     const timeoutId = setTimeout(() => {
       window.addEventListener('popstate', handlePopState);
-    }, 150);
+    }, 50);
 
     return () => {
       clearTimeout(timeoutId);
+      activeModalCount--;
       window.removeEventListener('popstate', handlePopState);
-
-      // Remove this modal from the stack
+      
       const index = modalStack.lastIndexOf(modalId);
       if (index !== -1) {
-        // If it was the top of the stack, and we are closing it programmatically (not via popstate),
-        // we should pop the browser history to keep it in sync.
         const wasTop = index === modalStack.length - 1;
         modalStack.splice(index, 1);
 
-        if (wasTop) {
+        // If the modal was closed programmatically (e.g. by clicking an on-screen X button),
+        // we must manually pop the browser history to keep it in sync.
+        if (wasTop && !poppedByBrowser) {
           isProgrammaticBack = true;
           window.history.back();
           setTimeout(() => {
             isProgrammaticBack = false;
-          }, 150);
+          }, 100);
         }
       }
     };
