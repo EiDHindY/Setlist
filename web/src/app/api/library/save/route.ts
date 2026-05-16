@@ -9,7 +9,7 @@ import { createAdminClient } from '@/lib/supabase-admin';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { userId, appleTrackId, title, artist, albumArtUrl, duration } = body;
+    const { userId, title, artist, albumArtUrl, appleTrackId, deezerTrackId, duration, videoId, videoTitle, channelName, thumbnailUrl } = body;
 
     if (!userId || !title || !artist) {
       return Response.json({ error: 'userId, title, and artist are required.' }, { status: 400 });
@@ -51,6 +51,15 @@ export async function POST(req: Request) {
       song = data;
     }
 
+    if (!song && deezerTrackId) {
+      const { data } = await admin
+        .from('Songs')
+        .select('*')
+        .eq('DeezerTrackId', deezerTrackId)
+        .maybeSingle();
+      song = data;
+    }
+
     if (!song) {
       const { data } = await admin
         .from('Songs')
@@ -59,6 +68,23 @@ export async function POST(req: Request) {
         .eq('Artist', artist)
         .maybeSingle();
       song = data;
+    }
+
+    // 2.5 Merge metadata if missing
+    if (song) {
+      const updates: any = {};
+      if (appleTrackId && !song.AppleTrackId) updates.AppleTrackId = appleTrackId;
+      if (deezerTrackId && !song.DeezerTrackId) updates.DeezerTrackId = deezerTrackId;
+      
+      if (Object.keys(updates).length > 0) {
+        const { data: updatedSong } = await admin
+          .from('Songs')
+          .update(updates)
+          .eq('Id', song.Id)
+          .select()
+          .single();
+        if (updatedSong) song = updatedSong;
+      }
     }
 
     if (!song) {
@@ -70,6 +96,7 @@ export async function POST(req: Request) {
           Artist: artist,
           AlbumArtUrl: albumArtUrl ?? null,
           AppleTrackId: appleTrackId ?? null,
+          DeezerTrackId: deezerTrackId ?? null,
           Duration: duration ?? 0,
           CreatedBy: userId,
           CreatedAt: new Date().toISOString(),
@@ -124,6 +151,10 @@ export async function POST(req: Request) {
       albumArtUrl: song.AlbumArtUrl ?? null,
       duration: song.Duration ?? 0,
       url: song.Url ?? null,
+      isrc: song.ISRC ?? null,
+      bpm: song.BPM ?? null,
+      musicalKey: song.MusicalKey ?? null,
+      moodTags: song.MoodTags ?? null,
       versions: (versions ?? []).map((v: any) => ({
         id: v.Id,
         youTubeId: v.YouTubeId,

@@ -43,6 +43,7 @@ CREATE TABLE "Songs" (
     "CreatedBy" text NOT NULL,
     "CreatedAt" timestamp with time zone NOT NULL,
     "AppleTrackId" text NULL,
+    "DeezerTrackId" text NULL,
     
     -- Added: 2026-05-04 for Lyrics Pipeline
     "PlainLyrics" text NULL,

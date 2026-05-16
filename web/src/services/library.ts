@@ -12,6 +12,7 @@ const BASE_URL = `/api/library`;
 export async function fetchLibrarySongs(userId: string): Promise<Song[]> {
   try {
     const response = await fetch(`${BASE_URL}/songs/${userId}`, {
+      cache: 'no-store',
       signal: AbortSignal.timeout(5000),
     });
 
@@ -35,10 +36,11 @@ export async function saveMasterSong(
   const requestData = {
     userId,
     appleTrackId: suggestion.appleTrackId,
+    deezerTrackId: suggestion.deezerTrackId,
     title: suggestion.songTitle ?? suggestion.text.split(' - ')[0],
     artist: suggestion.subtitle ?? suggestion.text.split(' - ').pop(),
     albumArtUrl: suggestion.imageUrl,
-    duration: 0,
+    duration: suggestion.duration ?? 0,
   };
 
   try {
@@ -108,6 +110,53 @@ export async function removeSongFromLibrary(
     return response.ok;
   } catch (e) {
     console.warn('🛑 Library Remove Error:', e);
+    return false;
+  }
+}
+
+/**
+ * Reports playback time to the server to increment global and user stats.
+ */
+export async function reportPlayback(
+  userId: string,
+  songId: string,
+  seconds: number,
+  incrementPlayCount: boolean = false
+): Promise<boolean> {
+  if (seconds <= 0) return false;
+  
+  try {
+    const response = await fetch(`${BASE_URL}/playback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, songId, seconds, incrementPlayCount }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    return response.ok;
+  } catch (e) {
+    console.warn('🛑 Playback Report Error:', e);
+    return false;
+  }
+}
+
+/**
+ * Updates a song's metadata (ISRC, BPM, etc.) in the background.
+ */
+export async function updateSongMetadata(
+  songId: string,
+  metadata: { isrc?: string; bpm?: number; musicalKey?: string; moodTags?: string[] }
+): Promise<boolean> {
+  try {
+    const response = await fetch(`${BASE_URL}/songs/metadata`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songId, ...metadata }),
+    });
+
+    return response.ok;
+  } catch (e) {
+    console.warn('🛑 Metadata Update Error:', e);
     return false;
   }
 }

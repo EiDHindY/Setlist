@@ -10,6 +10,17 @@ export interface SongVersion {
   duration: number; // seconds
 }
 
+export interface CreditsData {
+  production: Array<{ role: string; name: string }>;
+  musicians: Array<{ role: string; name: string }>;
+  vocals: Array<{ role: string; name: string }>;
+  additional: Array<{ role: string; name: string }>;
+  album?: string;
+  releaseDate?: string;
+  albumReleaseDate?: string;
+  source?: string;
+}
+
 export interface Song {
   id: string;
   title: string;
@@ -17,7 +28,16 @@ export interface Song {
   albumArt: string;
   duration: number; // seconds
   url?: string;
+  isrc?: string;
+  bpm?: number;
+  musicalKey?: string;
+  moodTags?: string[];
+  playCount?: number;
+  totalPlaySeconds?: number;
+  lastPlayedAt?: string;
+  addedAt?: string;
   versions: SongVersion[];
+  credits?: CreditsData;
 }
 
 // ── SEARCH TYPES ───────────────────────────────────────────────────
@@ -32,7 +52,10 @@ export interface SearchSuggestion {
   imageUrl?: string;
   songTitle?: string;
   appleTrackId?: string;
+  deezerTrackId?: string;
   isOfficial: boolean;
+  duration?: number; // seconds
+  isMastered?: boolean;
 }
 
 export interface YouTubeSearchResult {
@@ -96,6 +119,18 @@ export function parseSong(json: Record<string, unknown>): Song {
     albumArt: String(json.albumArtUrl ?? json.album_art ?? ''),
     duration: Number(json.duration ?? 0),
     url: json.url ? String(json.url) : undefined,
+    isrc: json.isrc ? String(json.isrc) : (json.ISRC ? String(json.ISRC) : undefined),
+    bpm: json.bpm !== undefined ? Number(json.bpm) : (json.BPM !== undefined ? Number(json.BPM) : undefined),
+    musicalKey: json.musicalKey ? String(json.musicalKey) : (json.MusicalKey ? String(json.MusicalKey) : undefined),
+    moodTags: Array.isArray(json.moodTags)
+      ? json.moodTags.map(String)
+      : Array.isArray(json.MoodTags)
+        ? json.MoodTags.map(String)
+        : undefined,
+    playCount: json.playCount !== undefined ? Number(json.playCount) : undefined,
+    totalPlaySeconds: json.totalPlaySeconds !== undefined ? Number(json.totalPlaySeconds) : undefined,
+    lastPlayedAt: json.lastPlayedAt ? String(json.lastPlayedAt) : undefined,
+    addedAt: json.addedAt ? String(json.addedAt) : undefined,
     versions,
   };
 }

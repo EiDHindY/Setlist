@@ -4,7 +4,7 @@
 // Native <iframe> + YouTube IFrame API.
 // Optimized to handle reparenting and playback sync.
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import X from 'lucide-react/dist/esm/icons/x';
 import Play from 'lucide-react/dist/esm/icons/play';
@@ -17,6 +17,7 @@ import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import { useMediaSession, useWakeLock, hapticTap } from '@/hooks/useNative';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { reportPlayback } from '@/services/library';
 
 const formatDuration = (seconds?: number) => {
   if (!seconds) return '0:00';
@@ -25,7 +26,7 @@ const formatDuration = (seconds?: number) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-export default function Player() {
+export default function Player({ userId }: { userId?: string }) {
   const { state, stop, togglePlayPause, setPlaying, toggleExpand } = usePlayback();
   const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
@@ -51,6 +52,7 @@ export default function Player() {
     setLyricsLoading(true);
 
     const params = new URLSearchParams({ title: song.title, artist: song.artist });
+    if (song.id) params.set('songId', song.id);          // ← enables DB cache
     if (version?.duration) params.set('duration', String(version.duration));
 
     fetch(`/api/lyrics?${params.toString()}`)
@@ -60,7 +62,7 @@ export default function Player() {
       })
       .catch(() => setLyricsData({ plain: null, source: 'Error' }))
       .finally(() => setLyricsLoading(false));
-  }, [isExpanded, song?.title, song?.artist]);
+  }, [isExpanded, song?.id, song?.title, song?.artist]);
 
   // 1. Load YouTube IFrame API
   useEffect(() => {
@@ -156,6 +158,86 @@ export default function Player() {
     }
   }, [isPlaying, isReady]);
 
+  // 4. Playback Tracking (Reports to DB)
+  // Uses a 1-second ticker to accumulate actual playing time.
+  // Flushes to DB every 10 accumulated seconds.
+  // PlayCount increments only once per session, using the Last.fm rule:
+  // 50% of the song duration, capped at 10 minutes (600 seconds).
+  // Pause/resume = same session. X button + replay = new session (version becomes null → resets).
+  const FLUSH_EVERY_SECONDS = 10;
+  
+  const playCountThreshold = useMemo(() => {
+    const duration = version?.duration || 60; // fallback to 60s if unknown (requires 30s)
+    return Math.min(Math.floor(duration * 0.5), 600);
+  }, [version?.duration]);
+
+  const sessionVideoIdRef = useRef<string | null>(null); // tracks which song's session is active
+  const pendingSecondsRef = useRef(0);                   // seconds since last DB flush
+  const totalSecondsRef = useRef(0);                     // total accumulated seconds for this session
+  const hasCountedRef = useRef(false);                   // whether PlayCount was already sent
+
+  // Reset session when a new song starts (version changes or player opened fresh)
+  useEffect(() => {
+    if (!version?.youtubeVideoId) {
+      // Player closed — fully reset
+      sessionVideoIdRef.current = null;
+      pendingSecondsRef.current = 0;
+      totalSecondsRef.current = 0;
+      hasCountedRef.current = false;
+      return;
+    }
+    if (sessionVideoIdRef.current !== version.youtubeVideoId) {
+      sessionVideoIdRef.current = version.youtubeVideoId;
+      pendingSecondsRef.current = 0;
+      totalSecondsRef.current = 0;
+      hasCountedRef.current = false;
+    }
+  }, [version?.youtubeVideoId]);
+
+  useEffect(() => {
+    if (!isPlaying || !userId || !song?.id || !version?.youtubeVideoId) return;
+
+    const tick = () => {
+      pendingSecondsRef.current += 1;
+      totalSecondsRef.current += 1;
+      
+      console.log(`[Playback Ticker] Pending: ${pendingSecondsRef.current}, Total: ${totalSecondsRef.current}`);
+
+      // Flush a batch to the DB every FLUSH_EVERY_SECONDS
+      if (pendingSecondsRef.current >= FLUSH_EVERY_SECONDS) {
+        const seconds = pendingSecondsRef.current;
+        pendingSecondsRef.current = 0;
+
+        // Increment PlayCount only once per session, after crossing the threshold
+        const shouldCount = !hasCountedRef.current && totalSecondsRef.current >= playCountThreshold;
+        if (shouldCount) hasCountedRef.current = true;
+
+        console.log(`[Playback Flush] Seconds: ${seconds}, Total: ${totalSecondsRef.current}, ShouldCount: ${shouldCount}`);
+        
+        reportPlayback(userId, song.id, seconds, shouldCount);
+      }
+    };
+
+    const interval = setInterval(tick, 1000);
+
+    return () => {
+      clearInterval(interval);
+      // Flush remaining partial seconds when paused or stopped
+      const remaining = pendingSecondsRef.current;
+      if (remaining > 0) {
+        pendingSecondsRef.current = 0;
+        
+        // Also check threshold here in case we paused/stopped exactly after crossing it
+        const shouldCount = !hasCountedRef.current && totalSecondsRef.current >= playCountThreshold;
+        if (shouldCount) hasCountedRef.current = true;
+
+        console.log(`[Playback Cleanup Flush] Seconds: ${remaining}, Total: ${totalSecondsRef.current}, ShouldCount: ${shouldCount}`);
+
+        reportPlayback(userId, song.id, remaining, shouldCount);
+      }
+    };
+  }, [isPlaying, userId, song?.id, version?.youtubeVideoId, playCountThreshold]);
+
   // ── NATIVE: Media Session ──────────────────────────────────────────
   useMediaSession(
     song && version
@@ -233,7 +315,17 @@ export default function Player() {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-            className="fixed inset-0 z-50 bg-[var(--sol-base03)] flex flex-col pointer-events-auto"
+            onPanEnd={(e, info) => {
+              // Only minimize if we swipe down significantly
+              if (info.offset.y > 80 || info.velocity.y > 300) {
+                // Check if we are at the top of the lyrics
+                const scrollContainer = document.getElementById('player-scroll-container');
+                if (!scrollContainer || scrollContainer.scrollTop <= 0) {
+                  toggleExpand();
+                }
+              }
+            }}
+            className="fixed inset-0 z-50 bg-[var(--sol-base03)] flex flex-col pointer-events-auto overscroll-none"
           >
             {/* Spacer for the video on mobile */}
             <div className="w-full aspect-video flex-shrink-0 md:hidden" />
@@ -250,7 +342,10 @@ export default function Player() {
             </button>
 
             {/* Scrollable Content Container */}
-            <div className="flex-1 overflow-y-auto hide-scrollbar p-6 pb-32">
+            <div 
+               id="player-scroll-container"
+               className="flex-1 overflow-y-auto hide-scrollbar p-6 pb-32 overscroll-contain"
+            >
                {/* Metadata */}
                <div className="mb-6 flex justify-between items-start">
                  <div>

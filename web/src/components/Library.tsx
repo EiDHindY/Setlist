@@ -16,10 +16,12 @@ import MoreVertical from 'lucide-react/dist/esm/icons/more-vertical';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
+import ArrowUpDown from 'lucide-react/dist/esm/icons/arrow-up-down';
 import Mic2 from 'lucide-react/dist/esm/icons/mic-2';
 import Disc3 from 'lucide-react/dist/esm/icons/disc-3';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 import Layers from 'lucide-react/dist/esm/icons/layers';
+
 import type { Song } from '@/types/song';
 import { supabase } from '@/utils/supabase';
 import { useLibraryStore } from '@/store/libraryStore';
@@ -43,6 +45,7 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showLocalSearch, setShowLocalSearch] = useState(false);
+  const [sortBy, setSortBy] = useState<'added' | 'plays' | 'recent'>('added');
   const lastScrollY = React.useRef(0);
 
   useHardwareBack(showLocalSearch, () => setShowLocalSearch(false), 'library_local_search');
@@ -51,18 +54,38 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
   // ── Derived stats for sidebar ─────────────────────────────────────
   const stats = useMemo(() => {
     const totalVersions = songs.reduce((acc, s) => acc + s.versions.length, 0);
+    const totalPlays = songs.reduce((acc, s) => acc + (s.playCount ?? 0), 0);
     const artists = [...new Set(songs.map((s) => s.artist).filter(Boolean))];
-    return { totalSongs: songs.length, totalVersions, uniqueArtists: artists.length, topArtists: artists.slice(0, 6) };
+    return { totalSongs: songs.length, totalVersions, totalPlays, uniqueArtists: artists.length, topArtists: artists.slice(0, 6) };
   }, [songs]);
 
   const filteredSongs = useMemo(() => {
-    if (!searchQuery.trim()) return songs;
-    const q = searchQuery.toLowerCase();
-    return songs.filter(s => 
-      s.title.toLowerCase().includes(q) || 
-      (s.artist && s.artist.toLowerCase().includes(q))
-    );
-  }, [songs, searchQuery]);
+    let result = songs;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = songs.filter(s => 
+        s.title.toLowerCase().includes(q) || 
+        (s.artist && s.artist.toLowerCase().includes(q))
+      );
+    }
+
+    // Sort the result
+    return [...result].sort((a, b) => {
+      if (sortBy === 'plays') {
+        return (b.playCount ?? 0) - (a.playCount ?? 0);
+      } else if (sortBy === 'recent') {
+        const dateA = a.lastPlayedAt ? new Date(a.lastPlayedAt).getTime() : 0;
+        const dateB = b.lastPlayedAt ? new Date(b.lastPlayedAt).getTime() : 0;
+        if (dateA === 0 && dateB === 0) return 0;
+        return dateB - dateA;
+      } else {
+        // Default: Added date
+        const dateA = a.addedAt ? new Date(a.addedAt).getTime() : 0;
+        const dateB = b.addedAt ? new Date(b.addedAt).getTime() : 0;
+        return dateB - dateA;
+      }
+    });
+  }, [songs, searchQuery, sortBy]);
 
   const loadSongs = useCallback(async (showRefresh = false) => {
     if (!userId) return;
@@ -116,7 +139,7 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
     <div className="flex flex-col h-full">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 py-4 md:pt-10 flex-shrink-0 h-16 md:h-22">
-        <div className="flex-1 mr-4 flex items-center h-full">
+        <div className="flex-1 mr-4 flex items-center h-full gap-2">
           <AnimatePresence>
             {showLocalSearch && (
               <motion.div
@@ -136,7 +159,19 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
               </motion.div>
             )}
           </AnimatePresence>
-          {!showLocalSearch && <div className="w-10" />} {/* Spacer for logo alignment */}
+          {!showLocalSearch && (
+            <button
+              onClick={() => {
+                const options: ('added' | 'plays' | 'recent')[] = ['added', 'plays', 'recent'];
+                const next = options[(options.indexOf(sortBy) + 1) % options.length];
+                setSortBy(next);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/20 text-[10px] font-bold text-[var(--sol-base1)] hover:bg-[var(--sol-base02)] transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <ArrowUpDown size={12} className="text-[var(--sol-cyan)]" />
+              {sortBy === 'added' ? 'NEWEST' : sortBy === 'plays' ? 'MOST PLAYS' : 'RECENT PLAYS'}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -263,8 +298,9 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
                       </p>
                     </div>
 
-                    {/* Version count */}
+                    {/* Stats */}
                     <div className="flex items-center gap-2">
+
                       <span
                         className={`text-[10px] font-bold px-2 py-1 rounded-md tracking-tighter font-[family-name:var(--font-montserrat)] ${
                           song.versions.length > 0
@@ -338,8 +374,8 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
                 {[
                   { icon: Music,    label: 'Songs',    value: stats.totalSongs },
                   { icon: Layers,   label: 'Versions', value: stats.totalVersions },
+                  { icon: BarChart3, label: 'Plays',    value: stats.totalPlays },
                   { icon: Mic2,     label: 'Artists',  value: stats.uniqueArtists },
-                  { icon: Disc3,    label: 'Albums',   value: '—' },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="bg-[var(--sol-base03)]/40 rounded-2xl p-4 flex flex-col gap-1 border border-white/5 transition-all hover:bg-[var(--sol-base03)]/60">
                     <Icon size={14} className="text-[var(--sol-cyan)]/70 mb-1" />

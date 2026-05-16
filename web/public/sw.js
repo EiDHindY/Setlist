@@ -35,9 +35,10 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip API calls, auth, and external domains — always go to network
+  // Skip API calls, Next.js assets/HMR, auth, and external domains
   if (
     request.url.includes('/api/') ||
+    request.url.includes('/_next/') ||
     request.url.includes('/auth/callback') ||
     request.url.includes('supabase') ||
     request.url.includes('googleapis.com') ||

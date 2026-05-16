@@ -22,7 +22,14 @@ import Clock from 'lucide-react/dist/esm/icons/clock';
 import Languages from 'lucide-react/dist/esm/icons/languages';
 import FilePenLine from 'lucide-react/dist/esm/icons/file-pen-line';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
-import type { Song, SongVersion } from '@/types/song';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
+import Copyright from 'lucide-react/dist/esm/icons/copyright';
+import Award from 'lucide-react/dist/esm/icons/award';
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Wand2 from 'lucide-react/dist/esm/icons/wand-2';
+import type { Song, SongVersion, CreditsData } from '@/types/song';
 import { formatDuration } from '@/types/song';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import VersionSearch from './VersionSearch';
@@ -55,9 +62,15 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const [artworkExpanded, setArtworkExpanded] = useState(false);
   const [lyricsData, setLyricsData] = useState<{ plain: string | null; source: string } | null>(null);
   const [lyricsLoading, setLyricsLoading] = useState(false);
+  const [creditsData, setCreditsData] = useState<CreditsData | null>(null);
+  const [creditsLoading, setCreditsLoading] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [isDeepOpen, setIsDeepOpen] = useState(false);
   const [activeLyricsSubTab, setActiveLyricsSubTab] = useState('view');
+  const [aiInterpretation, setAiInterpretation] = useState<string | null>(null);
+  const [interpreting, setInterpreting] = useState(false);
+  const [translatedLyrics, setTranslatedLyrics] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
   const lastScrollY = useRef(0);
   const { play, state } = usePlayback();
 
@@ -72,10 +85,44 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
       .then((data) => setLyricsData({ plain: data.plain ?? null, source: data.source ?? 'Unknown' }))
       .catch(() => setLyricsData({ plain: null, source: 'Error' }))
       .finally(() => setLyricsLoading(false));
-  }, [currentTab, song.title, song.artist, lyricsData]);
+  }, [currentTab, song.title, song.artist, lyricsData, song.id]);
+
+  // Fetch credits when the Credits tab is opened
+  useEffect(() => {
+    if (currentTab !== 2) return;
+    if (creditsData !== null) return; // Already fetched
+    setCreditsLoading(true);
+    const params = new URLSearchParams({ songId: song.id, title: song.title, artist: song.artist });
+    fetch(`/api/credits?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setCreditsData({ ...data.credits, source: data.source });
+      })
+      .catch(() => setCreditsData(null))
+      .finally(() => setCreditsLoading(false));
+  }, [currentTab, song.title, song.artist, creditsData, song.id]);
 
   useHardwareBack(true, onBack, `song_detail_${song.id}`);
   useHardwareBack(artworkExpanded, () => setArtworkExpanded(false), `artwork_expanded_${song.id}`);
+
+  const handleRefreshCredits = useCallback(async () => {
+    setCreditsLoading(true);
+    try {
+      const params = new URLSearchParams({ 
+        songId: song.id, 
+        title: song.title, 
+        artist: song.artist,
+        refresh: 'true' // Tell the API to ignore cache
+      });
+      const response = await fetch(`/api/credits?${params.toString()}`);
+      const data = await response.json();
+      setCreditsData({ ...data.credits, source: data.source });
+    } catch (error) {
+      console.error('🛑 Failed to refresh credits:', error);
+    } finally {
+      setCreditsLoading(false);
+    }
+  }, [song.id, song.title, song.artist]);
 
   const handlePlayVersion = useCallback((version: SongVersion) => {
     play(song, version);
@@ -209,22 +256,62 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         >
           
           {/* Desktop Only Tabs Header */}
-          <div className="hidden md:flex p-6 pb-2 border-b border-[var(--sol-base01)]/20 shrink-0 justify-between items-center">
-            <div className="flex gap-6 text-[var(--sol-base01)] font-bold text-sm">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`pb-2 tracking-wider transition-colors cursor-pointer ${
-                    currentTab === tab.id
-                      ? 'text-[var(--sol-cyan)] border-b-2 border-[var(--sol-cyan)]'
-                      : 'hover:text-[var(--sol-base0)]'
-                  }`}
-                >
-                  {tab.label.toUpperCase()}
-                </button>
-              ))}
+          <div className="hidden md:flex flex-col p-6 pb-2 border-b border-[var(--sol-base01)]/20 shrink-0 gap-4">
+            <div className="flex justify-between items-center">
+              <div className="flex gap-6 text-[var(--sol-base01)] font-bold text-sm">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`pb-2 tracking-wider transition-colors cursor-pointer relative ${
+                      currentTab === tab.id
+                        ? 'text-[var(--sol-cyan)]'
+                        : 'hover:text-[var(--sol-base0)]'
+                    }`}
+                  >
+                    {tab.label.toUpperCase()}
+                    {currentTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--sol-cyan)]"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Sub-Tabs (Desktop) */}
+            <AnimatePresence>
+              {currentTab === 1 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                  animate={{ height: 'auto', opacity: 1, marginTop: 4 }}
+                  exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                  className="flex gap-2 overflow-hidden pb-2"
+                >
+                  {LYRICS_SUB_TABS.map((sub) => {
+                    const isActive = activeLyricsSubTab === sub.id;
+                    const Icon = sub.icon;
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => setActiveLyricsSubTab(sub.id)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all ${
+                          isActive
+                            ? 'bg-[var(--sol-cyan)]/20 text-[var(--sol-cyan)] border border-[var(--sol-cyan)]/30'
+                            : 'text-[var(--sol-base01)] hover:text-[var(--sol-base1)] hover:bg-[var(--sol-base01)]/5 border border-transparent'
+                        }`}
+                      >
+                        <Icon size={14} />
+                        {sub.label}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Tab Content Area */}
@@ -347,37 +434,327 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                 onScroll={handleLyricsScroll}
               >
                 {lyricsLoading && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <div className="w-8 h-8 border-2 border-[var(--sol-cyan)] border-t-transparent rounded-full animate-spin" />
-                    <p className="text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)]">Finding lyrics...</p>
+                  <div className="space-y-4 pt-10">
+                    <div className="h-4 w-3/4 rounded-full bg-[var(--sol-base01)]/10 animate-shimmer" />
+                    <div className="h-4 w-full rounded-full bg-[var(--sol-base01)]/10 animate-shimmer" />
+                    <div className="h-4 w-5/6 rounded-full bg-[var(--sol-base01)]/10 animate-shimmer" />
+                    <div className="h-4 w-2/3 rounded-full bg-[var(--sol-base01)]/10 animate-shimmer" />
                   </div>
                 )}
                 {!lyricsLoading && !lyricsData?.plain && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <Mic2 size={48} className="text-[var(--sol-base01)]/30" strokeWidth={1.5} />
-                    <p className="text-[var(--sol-base01)] text-sm font-bold tracking-[2px] font-[family-name:var(--font-outfit)]">NO LYRICS FOUND</p>
-                    <p className="text-[var(--sol-base01)]/60 text-xs font-[family-name:var(--font-montserrat)] text-center max-w-[220px]">
-                      Couldn't find lyrics for this song on Genius or LRCLIB
+                  <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                    <AlignLeft size={48} className="text-[var(--sol-base01)] mb-4" strokeWidth={1.5} />
+                    <p className="text-[var(--sol-base01)] text-xs font-bold tracking-[2px] font-[family-name:var(--font-outfit)] uppercase text-center max-w-[220px]">
+                      Couldn't find lyrics for this song
                     </p>
                   </div>
                 )}
                 {!lyricsLoading && lyricsData?.plain && (
-                  <div className="space-y-1">
-                    {lyricsData.plain.split('\n').map((line, i) => (
-                      <p
-                        key={i}
-                        className={`font-[family-name:var(--font-montserrat)] leading-relaxed ${
-                          line.trim() === ''
-                            ? 'h-4'
-                            : 'text-[var(--sol-base2)] text-base md:text-lg font-medium'
-                        }`}
-                      >
-                        {line || '\u00A0'}
-                      </p>
-                    ))}
+                  <div className="space-y-8">
+                    {activeLyricsSubTab === 'view' && (
+                      <div className="space-y-1">
+                        {lyricsData.plain.split('\n').map((line, i) => (
+                          <p
+                            key={i}
+                            className={`font-[family-name:var(--font-montserrat)] leading-relaxed ${
+                              line.trim() === ''
+                                ? 'h-4'
+                                : 'text-[var(--sol-base2)] text-base md:text-lg font-medium'
+                            }`}
+                          >
+                            {line || '\u00A0'}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {activeLyricsSubTab === 'sync' && (
+                      <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                        <Clock size={48} className="text-[var(--sol-base01)] mb-4" />
+                        <p className="text-[var(--sol-base01)] text-xs font-bold tracking-widest uppercase">Sync Feature - Ready for your code!</p>
+                      </div>
+                    )}
+
+                    {activeLyricsSubTab === 'translate' && (
+                      <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                        <Languages size={48} className="text-[var(--sol-base01)] mb-4" />
+                        <p className="text-[var(--sol-base01)] text-xs font-bold tracking-widest uppercase">Translate Feature - Ready for your code!</p>
+                      </div>
+                    )}
+
+                    {activeLyricsSubTab === 'edit' && (
+                      <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                        <FilePenLine size={48} className="text-[var(--sol-base01)] mb-4" />
+                        <p className="text-[var(--sol-base01)] text-xs font-bold tracking-widest uppercase">Edit Feature - Ready for your code!</p>
+                      </div>
+                    )}
+
                     <p className="text-[var(--sol-base01)]/40 text-xs italic mt-8 text-center font-[family-name:var(--font-outfit)]">Lyrics via {lyricsData?.source || 'Genius'}</p>
                   </div>
                 )}
+              </div>
+            ) : currentTab === 2 ? (
+              // ── Credits Tab ──
+              <div className="h-full overflow-y-auto px-5 pb-28 md:pb-6 pt-4">
+                {creditsLoading ? (
+                  <div className="space-y-8 animate-pulse">
+                    {/* Album/Date Shimmer */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="h-16 rounded-2xl animate-shimmer opacity-40" />
+                      <div className="h-16 rounded-2xl animate-shimmer opacity-40" />
+                    </div>
+                    {/* Section Shimmers */}
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="space-y-3">
+                        <div className="h-4 w-24 rounded animate-shimmer opacity-30" />
+                        <div className="space-y-2">
+                          <div className="h-8 w-full rounded-xl animate-shimmer opacity-20" />
+                          <div className="h-8 w-full rounded-xl animate-shimmer opacity-20" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Album & Release Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10 rounded-2xl p-4">
+                        <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-wider font-[family-name:var(--font-outfit)] uppercase mb-1">Album</p>
+                        <p className="text-[var(--sol-base3)] text-sm font-semibold truncate select-all">
+                          {creditsData?.album || song.album || 'Unknown'}
+                        </p>
+                      </div>
+                      <div className="bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10 rounded-2xl p-4">
+                        <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-wider font-[family-name:var(--font-outfit)] uppercase mb-1">Release Date</p>
+                        <p className="text-[var(--sol-base3)] text-sm font-semibold select-all">
+                          {creditsData?.releaseDate || 'Unknown'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Group A: Production */}
+                    <CreditSection 
+                      title="🎬 Production" 
+                      items={creditsData?.production || []} 
+                      icon={Award}
+                    />
+
+                    {/* Group B: Musicians */}
+                    <CreditSection 
+                      title="🎸 Musicians" 
+                      items={creditsData?.musicians || []} 
+                      icon={Users}
+                    />
+
+                    {/* Group C: Vocals & Lyrics */}
+                    <CreditSection 
+                      title="🎤 Vocals & Lyrics" 
+                      items={creditsData?.vocals || []} 
+                      icon={Mic2}
+                    />
+
+                    {/* Group D: Copyright */}
+                    {creditsData?.additional && Array.isArray(creditsData.additional) && creditsData.additional.length > 0 && (
+                      <CreditSection 
+                        title="🏛️ Copyright" 
+                        items={creditsData.additional} 
+                        icon={Copyright}
+                      />
+                    )}
+
+                    {creditsData?.source && (
+                      <div className="mt-12 mb-8 flex flex-col items-center gap-4">
+                        <p className="text-[var(--sol-base01)]/40 text-[10px] italic text-center font-[family-name:var(--font-outfit)] tracking-wider uppercase">
+                          Credits via {creditsData.source}
+                        </p>
+                        <button
+                          onClick={handleRefreshCredits}
+                          disabled={creditsLoading}
+                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--sol-base01)]/5 hover:bg-[var(--sol-base01)]/10 border border-[var(--sol-base01)]/10 transition-all active:scale-95 disabled:opacity-50 group"
+                        >
+                          <RefreshCw size={12} className={`text-[var(--sol-cyan)] ${creditsLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                          <span className="text-[var(--sol-base01)] text-[10px] font-bold tracking-widest uppercase">Refresh Data</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {(!creditsData || (creditsData.production.length === 0 && creditsData.musicians.length === 0 && creditsData.vocals.length === 0)) && (
+                      <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                        <Users size={48} className="text-[var(--sol-base01)] mb-4" strokeWidth={1.5} />
+                        <p className="text-[var(--sol-base01)] text-xs font-bold tracking-[2px] font-[family-name:var(--font-outfit)] uppercase">No Detailed Credits Found</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : currentTab === 4 ? (
+              // ── Stats Tab ──
+              <div className="h-full overflow-y-auto px-5 pb-28 md:pb-6 pt-4">
+                <div className="space-y-6">
+                  {/* Mastery Section */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-[var(--sol-base02)] to-[var(--sol-base03)] border border-[var(--sol-cyan)]/20 rounded-2xl p-5 relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                      <Award size={80} className="text-[var(--sol-cyan)]" />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2.5 rounded-xl bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)]">
+                        <Award size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-[var(--sol-base2)] font-bold text-sm tracking-wide font-[family-name:var(--font-outfit)]">MASTERY LEVEL</h3>
+                        <p className="text-[var(--sol-cyan)] text-xs font-semibold">Level {song.masteryLevel || 0}</p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-2">
+                      <div className="h-2 w-full bg-[var(--sol-base01)]/20 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(((song.playCount || 0) / 50) * 100, 100)}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="h-full bg-gradient-to-r from-[var(--sol-cyan)] to-[var(--sol-blue)] shadow-[0_0_10px_rgba(42,161,152,0.4)]"
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-[var(--sol-base01)] font-medium">
+                        <span>{song.playCount || 0} Plays</span>
+                        <span>Next: {Math.max(50 - (song.playCount || 0), 0)} more</span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Grid of Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Total Plays */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10 rounded-2xl p-4"
+                    >
+                      <TrendingUp size={18} className="text-[var(--sol-cyan)] mb-2" />
+                      <p className="text-[var(--sol-base3)] text-xl font-bold font-[family-name:var(--font-montserrat)]">{song.playCount || 0}</p>
+                      <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-wider font-[family-name:var(--font-outfit)] uppercase">Total Plays</p>
+                    </motion.div>
+
+                    {/* Total Time */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10 rounded-2xl p-4"
+                    >
+                      <Clock size={18} className="text-[var(--sol-blue)] mb-2" />
+                      <p className="text-[var(--sol-base3)] text-xl font-bold font-[family-name:var(--font-montserrat)]">
+                        {(() => {
+                          const sec = song.totalPlaySeconds || 0;
+                          const m = Math.floor(sec / 60);
+                          const s = sec % 60;
+                          return `${m}:${s.toString().padStart(2, '0')}`;
+                        })()}
+                      </p>
+                      <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-wider font-[family-name:var(--font-outfit)] uppercase">Time Listened</p>
+                    </motion.div>
+
+                    {/* Last Played */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10 rounded-2xl p-4 col-span-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Calendar size={18} className="text-[var(--sol-magenta)]" />
+                        <div className="flex-1">
+                          <p className="text-[var(--sol-base2)] text-sm font-semibold font-[family-name:var(--font-montserrat)]">
+                            {song.lastPlayedAt ? new Date(song.lastPlayedAt).toLocaleDateString(undefined, { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Not played yet'}
+                          </p>
+                          <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-wider font-[family-name:var(--font-outfit)] uppercase mt-0.5">Last Played At</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Metadata Section */}
+                  {(song.isrc || song.bpm || song.musicalKey || (song.moodTags && song.moodTags.length > 0)) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      className="bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10 rounded-2xl p-4 space-y-4"
+                    >
+                      {song.isrc && (
+                        <div className="flex items-center gap-3">
+                          <Music size={18} className="text-[var(--sol-cyan)]" />
+                          <div className="flex-1">
+                            <p className="text-[var(--sol-base2)] text-sm font-mono font-medium tracking-wider select-all uppercase">
+                              {song.isrc}
+                            </p>
+                            <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-wider font-[family-name:var(--font-outfit)] uppercase mt-0.5">ISRC Code</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-4">
+                        {song.bpm && (
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--sol-orange)]/15 text-[var(--sol-orange)] border border-[var(--sol-orange)]/25">
+                                {song.bpm}
+                              </span>
+                            </div>
+                            <p className="text-[var(--sol-base01)] text-[9px] font-bold uppercase">BPM</p>
+                          </div>
+                        )}
+                        {song.musicalKey && (
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--sol-violet)]/15 text-[var(--sol-violet)] border border-[var(--sol-violet)]/25">
+                                {song.musicalKey}
+                              </span>
+                            </div>
+                            <p className="text-[var(--sol-base01)] text-[9px] font-bold uppercase">KEY</p>
+                          </div>
+                        )}
+                        {song.moodTags && song.moodTags.length > 0 && (
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {song.moodTags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[var(--sol-magenta)]/15 text-[var(--sol-magenta)] border border-[var(--sol-magenta)]/25 capitalize"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                            <p className="text-[var(--sol-base01)] text-[9px] font-bold uppercase">MOOD / GENRE</p>
+                          </div>
+                        )}
+
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Future Stats Tip */}
+                  <div className="bg-[var(--sol-cyan)]/5 border border-dashed border-[var(--sol-cyan)]/20 rounded-xl p-4">
+                    <p className="text-[var(--sol-base01)] text-[11px] leading-relaxed italic text-center font-[family-name:var(--font-montserrat)]">
+                      Playback stats are recorded after 30 seconds of listening. Keep practicing to increase your Mastery!
+                    </p>
+                  </div>
+                </div>
               </div>
             ) : (
               // ── Other Placeholder Tabs ──
@@ -414,7 +791,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <div className="glass-heavy border-t border-[var(--sol-cyan)]/20 overflow-hidden relative min-h-[64px] flex items-center">
+            <div className="border-t border-[var(--sol-cyan)]/20 overflow-hidden relative min-h-[64px] flex items-center" style={{ background: 'var(--sol-base02)' }}>
               <AnimatePresence mode="wait">
                 {currentTab === 1 && isDeepOpen ? (
                   /* ── LYRICS SUB-NAV ───────────────────────────────────── */
@@ -426,7 +803,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x < -40) setIsDeepOpen(false);
+                      if (info.offset.x > 40) setIsDeepOpen(false);
                     }}
                     className="flex items-center w-full justify-around px-2 py-2"
                   >
@@ -473,7 +850,7 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x > 40 && currentTab === 1) setIsDeepOpen(true);
+                      if (info.offset.x < -40 && currentTab === 1) setIsDeepOpen(true);
                     }}
                     className="flex items-center justify-around w-full max-w-2xl mx-auto px-2 py-2"
                   >
@@ -552,5 +929,41 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
         }}
       />
     </>
+  );
+}
+
+// ── SUB-COMPONENTS ───────────────────────────────────────────────────
+
+function CreditSection({ title, items, icon: Icon }: { title: string; items: Array<{ role: string; name: string }>; icon: any }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 border-b border-[var(--sol-base01)]/10 pb-2">
+        <Icon size={14} className="text-[var(--sol-cyan)]" />
+        <h3 className="text-[var(--sol-base01)] text-xs font-bold tracking-[2px] font-[family-name:var(--font-outfit)] uppercase">
+          {title}
+        </h3>
+      </div>
+      <div className="space-y-2">
+        {items.length > 0 ? (
+          items.map((item, i) => (
+            <div key={i} className="flex justify-between items-baseline gap-4 group">
+              <span className="text-[var(--sol-base01)] text-[11px] font-medium font-[family-name:var(--font-montserrat)] uppercase tracking-tight shrink-0">
+                {item.role}
+              </span>
+              <div className="h-[1px] flex-1 bg-[var(--sol-base01)]/5 group-hover:bg-[var(--sol-base01)]/10 transition-colors" />
+              <span className="text-[var(--sol-base3)] text-sm font-semibold font-[family-name:var(--font-montserrat)] text-right select-all">
+                {item.name}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="flex justify-between items-baseline gap-4 opacity-30">
+            <span className="text-[var(--sol-base01)] text-[11px] font-medium font-[family-name:var(--font-montserrat)] uppercase tracking-tight">INFO</span>
+            <div className="h-[1px] flex-1 bg-[var(--sol-base01)]/5" />
+            <span className="text-[var(--sol-base3)] text-sm font-semibold font-[family-name:var(--font-montserrat)]">Unknown</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

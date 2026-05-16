@@ -38,6 +38,7 @@ async function fetchITunesSuggestions(query: string): Promise<SearchSuggestion[]
         songTitle: item.trackName ? String(item.trackName) : undefined,
         appleTrackId: item.trackId?.toString(),
         isOfficial: true,
+        duration: item.trackTimeMillis ? Math.floor(Number(item.trackTimeMillis) / 1000) : undefined,
       }));
   } catch {
     return [];
@@ -70,8 +71,9 @@ async function fetchDeezerSuggestions(query: string): Promise<SearchSuggestion[]
         subtitle: artistName,
         imageUrl: artworkUrl,
         songTitle: item.title ? String(item.title) : undefined,
-        appleTrackId: `dz_${item.id}`,
+        deezerTrackId: String(item.id),
         isOfficial: true,
+        duration: item.duration ? Number(item.duration) : undefined,
       };
     });
   } catch {

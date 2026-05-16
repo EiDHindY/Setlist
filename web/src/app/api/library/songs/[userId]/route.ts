@@ -2,6 +2,7 @@
 // Replaces: GET /api/library/songs/{userId} from .NET LibraryController
 
 export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 import { createAdminClient } from '@/lib/supabase-admin';
 
@@ -17,7 +18,14 @@ export async function GET(
     // Step 1: Get user's song IDs + Song metadata
     const { data: userSongs, error: usError } = await admin
       .from('UserSongs')
-      .select('SongId, AddedAt, Songs:Songs(Id, Title, Artist, AlbumArtUrl, Duration, Url)')
+      .select(`
+        SongId, 
+        AddedAt, 
+        PlayCount, 
+        TotalPlaySeconds, 
+        LastPlayedAt,
+        Songs:Songs(Id, Title, Artist, AlbumArtUrl, Duration, Url)
+      `)
       .eq('UserId', userId)
       .order('AddedAt', { ascending: false });
 
@@ -57,6 +65,10 @@ export async function GET(
         albumArtUrl: s.AlbumArtUrl ?? null,
         duration: s.Duration ?? 0,
         url: s.Url ?? null,
+        playCount: us.PlayCount || 0,
+        totalPlaySeconds: us.TotalPlaySeconds || 0,
+        lastPlayedAt: us.LastPlayedAt ?? null,
+        addedAt: us.AddedAt,
         versions: versionsBySongId[s.Id] ?? [],
       };
     });

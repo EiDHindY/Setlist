@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Outfit, Montserrat } from "next/font/google";
 import { PlaybackProvider } from "@/contexts/PlaybackContext";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import PreventPullToRefresh from "@/components/PreventPullToRefresh";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -43,10 +44,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${outfit.variable} ${montserrat.variable} h-full antialiased`}
+      style={{ overscrollBehavior: 'none' }}
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning style={{ overscrollBehavior: 'none' }}>
         <ServiceWorkerRegister />
         <PlaybackProvider>
+          <PreventPullToRefresh />
           {children}
         </PlaybackProvider>
       </body>

@@ -20,7 +20,11 @@ import {
   getVideoDetails,
   cleanYouTubeTitle,
 } from '@/services/youtube-search';
-import { saveMasterSong, saveVersion } from '@/services/library';
+import { saveMasterSong, saveVersion, updateSongMetadata } from '@/services/library';
+import { fetchISRC, fetchMBGenreTags } from '@/services/musicbrainz';
+import { fetchDeezerMetadata, searchDeezerMetadata } from '@/services/deezer';
+import { fetchMoodMetadata } from '@/services/audiodb';
+import { fetchSongBPMData } from '@/services/getsongbpm';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 interface SearchModalProps {
@@ -130,6 +134,98 @@ export default function SearchModal({ isOpen, onClose, onSongAdded, initialQuery
     const savedSong = await saveMasterSong(user.id, suggestion);
 
     if (savedSong) {
+      // BACKGROUND PHASE: Fetch ISRC and other metadata without blocking the UI
+      const artist = savedSong.artist;
+      const title = savedSong.title;
+      const deezerId = suggestion.deezerTrackId;
+      
+      // Fire and forget (it will run in the background)
+      (async () => {
+        try {
+          let metadata: { isrc?: string; bpm?: number; musicalKey?: string; moodTags?: string[] } = {};
+          const tagSet = new Set<string>(); // collects mood/genre tags from all sources
+
+          // ── Phase 0: GetSongBPM (best source – BPM + Musical Key) ────
+          console.log(`🔍 [Background] Fetching GetSongBPM data for "${title}"...`);
+          const bpmData = await fetchSongBPMData(title, artist);
+          if (bpmData) {
+            if (bpmData.bpm) { metadata.bpm = bpmData.bpm; console.log(`✅ [Background] BPM via GetSongBPM: ${bpmData.bpm}`); }
+            if (bpmData.key) { metadata.musicalKey = bpmData.key; console.log(`✅ [Background] Key via GetSongBPM: ${bpmData.key}`); }
+            bpmData.genres?.forEach(g => tagSet.add(g.toLowerCase().trim()));
+            if (bpmData.genres?.length) console.log(`✅ [Background] Genres via GetSongBPM: ${bpmData.genres.join(', ')}`);
+          }
+
+          // ── Phase 1: Deezer (ISRC + BPM fallback + Genre) ────────────
+          console.log(`🔍 [Background] Fetching Deezer metadata for "${title}" (ID: ${deezerId || 'searching...'})`);
+          let deezerData = deezerId
+            ? await fetchDeezerMetadata(deezerId)
+            : await searchDeezerMetadata(title, artist);
+
+          if (deezerData) {
+            if (!metadata.bpm && deezerData.bpm) { metadata.bpm = deezerData.bpm; console.log(`✅ [Background] BPM via Deezer: ${metadata.bpm}`); }
+            if (deezerData.isrc) { metadata.isrc = deezerData.isrc; console.log(`✅ [Background] ISRC via Deezer: ${metadata.isrc}`); }
+            if (deezerData.genre) tagSet.add(deezerData.genre.toLowerCase().trim());
+          }
+
+          // ── Phase 1b: BPM fallback – if direct ID had no BPM, search by name ──
+          if (!metadata.bpm && deezerId) {
+            console.log(`🔍 [Background] BPM missing from track ID, trying Deezer search fallback...`);
+            const fallbackData = await searchDeezerMetadata(title, artist);
+            if (fallbackData?.bpm) { metadata.bpm = fallbackData.bpm; console.log(`✅ [Background] BPM via Deezer fallback: ${metadata.bpm}`); }
+            if (fallbackData?.genre) tagSet.add(fallbackData.genre.toLowerCase().trim());
+          }
+
+          // ── Phase 2: MusicBrainz for ISRC (if Deezer missed it) ─────
+          if (!metadata.isrc) {
+            console.log(`🔍 [Background] Falling back to MusicBrainz for ISRC...`);
+            const isrc = await fetchISRC(title, artist);
+            if (isrc) {
+              metadata.isrc = isrc;
+              console.log(`✅ [Background] ISRC via MusicBrainz: ${isrc}`);
+            }
+          }
+
+          // ── Phase 3a: AudioDB – ALWAYS run to collect mood + genre ───
+          console.log(`🔍 [Background] Fetching AudioDB tags for "${title}"...`);
+          const audioData = await fetchMoodMetadata(title, artist);
+          if (audioData) {
+            if (audioData.mood)  tagSet.add(audioData.mood.toLowerCase().trim());
+            if (audioData.genre) tagSet.add(audioData.genre.toLowerCase().trim());
+            if (audioData.mood || audioData.genre)
+              console.log(`✅ [Background] Tags via AudioDB: mood=${audioData.mood}, genre=${audioData.genre}`);
+          }
+
+          // ── Phase 3b: MusicBrainz genre (only if tagSet still empty) ─
+          if (tagSet.size === 0) {
+            console.log(`🔍 [Background] No tags yet, trying MusicBrainz genre...`);
+            const mbGenre = await fetchMBGenreTags(title, artist);
+            if (mbGenre) { tagSet.add(mbGenre.toLowerCase().trim()); console.log(`✅ [Background] Genre via MusicBrainz: ${mbGenre}`); }
+          }
+
+          // Finalise tags array (filter empty strings, deduplicated by Set)
+          const finalTags = Array.from(tagSet).filter(Boolean);
+          if (finalTags.length > 0) {
+            metadata.moodTags = finalTags;
+            console.log(`🏷️ [Background] Final merged tags: [${finalTags.join(', ')}]`);
+          }
+
+          // ── Phase 4: Persist to DB ───────────────────────────────────
+          if (metadata.isrc || metadata.bpm || metadata.musicalKey || metadata.moodTags) {
+            console.log(`💾 [Background] Updating database for "${title}" with:`, metadata);
+            const success = await updateSongMetadata(savedSong.id, metadata);
+            if (success) {
+              console.log(`✨ [Background] Successfully updated metadata for "${title}"`);
+            } else {
+              console.warn(`🛑 [Background] Database update failed for "${title}"`);
+            }
+          } else {
+            console.log(`ℹ️ [Background] No metadata found for "${title}"`);
+          }
+        } catch (err) {
+          console.warn('🛑 Background metadata fetch failed:', err);
+        }
+      })();
+
       // EXPRESS LANE: If we have a shared YouTube link, auto-save the version
       if (sharedYouTubeId) {
         const ytResult = await getVideoDetails(sharedYouTubeId);

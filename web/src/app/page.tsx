@@ -346,7 +346,7 @@ export default function HomePage() {
           </main>
 
           {/* Player — always mounted at root */}
-          <Player />
+          <Player userId={sessionUser?.user?.id} />
         </div>
       )}
 
