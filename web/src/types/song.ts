@@ -38,6 +38,8 @@ export interface Song {
   addedAt?: string;
   versions: SongVersion[];
   credits?: CreditsData;
+  album?: string;
+  masteryLevel?: number;
 }
 
 // ── SEARCH TYPES ───────────────────────────────────────────────────
@@ -131,6 +133,8 @@ export function parseSong(json: Record<string, unknown>): Song {
     totalPlaySeconds: json.totalPlaySeconds !== undefined ? Number(json.totalPlaySeconds) : undefined,
     lastPlayedAt: json.lastPlayedAt ? String(json.lastPlayedAt) : undefined,
     addedAt: json.addedAt ? String(json.addedAt) : undefined,
+    album: json.album ? String(json.album) : (json.Album ? String(json.Album) : undefined),
+    masteryLevel: json.masteryLevel !== undefined ? Number(json.masteryLevel) : undefined,
     versions,
   };
 }
