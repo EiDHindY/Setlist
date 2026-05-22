@@ -135,6 +135,7 @@ export function parseSong(json: Record<string, unknown>): Song {
     addedAt: json.addedAt ? String(json.addedAt) : undefined,
     album: json.album ? String(json.album) : (json.Album ? String(json.Album) : undefined),
     masteryLevel: json.masteryLevel !== undefined ? Number(json.masteryLevel) : undefined,
+    credits: json.credits as any, // Basic mapping for now
     versions,
   };
 }

@@ -21,16 +21,74 @@ import Mic2 from 'lucide-react/dist/esm/icons/mic-2';
 import Disc3 from 'lucide-react/dist/esm/icons/disc-3';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 import Layers from 'lucide-react/dist/esm/icons/layers';
-
+import Sliders from 'lucide-react/dist/esm/icons/sliders';
+import Headphones from 'lucide-react/dist/esm/icons/headphones';
 import type { Song } from '@/types/song';
 import { supabase } from '@/utils/supabase';
 import { useLibraryStore } from '@/store/libraryStore';
 import { collectionSubTabs } from '@/components/navigation/nav-config';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import SetlistsTab from '@/components/SetlistsTab';
+import AddToSetlistModal from '@/components/AddToSetlistModal';
+import Check from 'lucide-react/dist/esm/icons/check';
+import ListMusic from 'lucide-react/dist/esm/icons/list-music';
+
+// ── PERSON AVATAR COMPONENT ─────────────────────────────────────────
+// Fetches real face/profile pictures from Discogs API dynamically.
+const PersonAvatar = ({ name, fallbackImage, type }: { name: string, fallbackImage?: string, type: 'artist' | 'producer' | 'mixer' }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImage = async () => {
+      try {
+        const res = await fetch(`/api/artist-image?name=${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.imageUrl) {
+            setImageUrl(data.imageUrl);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch avatar for', name, err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchImage();
+    return () => { isMounted = false; };
+  }, [name]);
+
+  const displayUrl = imageUrl || fallbackImage;
+
+  if (loading && !fallbackImage) {
+    return (
+      <div className="w-full h-full bg-white/5 flex items-center justify-center animate-pulse">
+        {type === 'artist' && <Mic2 size={24} className="opacity-30" />}
+        {type === 'producer' && <Sliders size={24} className="opacity-30" />}
+        {type === 'mixer' && <Headphones size={24} className="opacity-30" />}
+      </div>
+    );
+  }
+
+  if (displayUrl) {
+    return <img src={displayUrl} alt={name} className={`w-full h-full object-cover transition-opacity duration-500 ${loading ? 'opacity-50' : 'opacity-100'}`} />;
+  }
+
+  return (
+    <div className={`w-full h-full flex items-center justify-center ${type === 'artist' ? 'bg-white/5' : type === 'producer' ? 'bg-[var(--sol-cyan)]/10' : 'bg-[var(--sol-base01)]/10'}`}>
+      {type === 'artist' && <Mic2 size={24} className="opacity-50" />}
+      {type === 'producer' && <Sliders size={24} className="text-[var(--sol-cyan)] opacity-70" />}
+      {type === 'mixer' && <Headphones size={24} className="text-[var(--sol-base01)] opacity-70" />}
+    </div>
+  );
+};
+
 
 interface LibraryProps {
   onOpenSearch: () => void;
-  onSelectSong: (song: Song) => void;
+  onSelectSong: (song: Song, initialTab?: number) => void;
   activeSubTab: string;
   onSubTabChange: (subId: string) => void;
   userId: string;
@@ -86,6 +144,82 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
       }
     });
   }, [songs, searchQuery, sortBy]);
+
+  // Setlist modal
+  const [addingSongToSetlist, setAddingSongToSetlist] = useState<Song | null>(null);
+  
+  // Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
+  // Derived lists for other tabs
+  const artistsList = useMemo(() => {
+    const map = new Map<string, { artist: string, songCount: number, albumArt: string }>();
+    filteredSongs.forEach(s => {
+      if (s.artist) {
+        if (!map.has(s.artist)) {
+          map.set(s.artist, { artist: s.artist, songCount: 1, albumArt: s.albumArt });
+        } else {
+          map.get(s.artist)!.songCount++;
+        }
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount);
+  }, [filteredSongs]);
+
+  const albumsList = useMemo(() => {
+    const map = new Map<string, { album: string, artist: string, songCount: number, albumArt: string }>();
+    filteredSongs.forEach(s => {
+      const albumName = s.album || 'Unknown Album';
+      const key = `${albumName}-${s.artist}`;
+      if (!map.has(key)) {
+        map.set(key, { album: albumName, artist: s.artist, songCount: 1, albumArt: s.albumArt });
+      } else {
+        map.get(key)!.songCount++;
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount);
+  }, [filteredSongs]);
+
+  const producersList = useMemo(() => {
+    const map = new Map<string, { name: string, songCount: number, albumArt?: string }>();
+    filteredSongs.forEach(s => {
+      if (s.credits?.production) {
+        s.credits.production.forEach(p => {
+          if (!map.has(p.name)) {
+            map.set(p.name, { name: p.name, songCount: 1, albumArt: s.albumArt });
+          } else {
+            map.get(p.name)!.songCount++;
+          }
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount);
+  }, [filteredSongs]);
+
+  const mixersList = useMemo(() => {
+    const map = new Map<string, { name: string, songCount: number, albumArt?: string }>();
+    filteredSongs.forEach(s => {
+      // Assuming mixers might be in additional or production with role 'mixer'
+      const allCredits = [
+        ...(s.credits?.production || []),
+        ...(s.credits?.additional || [])
+      ];
+      allCredits.forEach(c => {
+        if (c.role.toLowerCase().includes('mix')) {
+          if (!map.has(c.name)) {
+            map.set(c.name, { name: c.name, songCount: 1, albumArt: s.albumArt });
+          } else {
+            map.get(c.name)!.songCount++;
+          }
+        }
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => b.songCount - a.songCount);
+  }, [filteredSongs]);
 
   const loadSongs = useCallback(async (showRefresh = false) => {
     if (!userId) return;
@@ -203,6 +337,46 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
         </div>
       </div>
 
+
+      {/* ── Missing Credits Banner (Producers / Mixers tabs) ────── */}
+      <AnimatePresence>
+        {(activeSubTab === 'producers' || activeSubTab === 'mixers') && (() => {
+          const missingSongs = filteredSongs.filter(s => !s.credits);
+          if (missingSongs.length === 0) return null;
+          return (
+            <motion.div
+              key="missing-credits-banner"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-6 pb-2"
+            >
+              <div className="bg-[var(--sol-yellow)]/8 border border-[var(--sol-yellow)]/20 rounded-xl px-4 py-3">
+                <p className="text-[var(--sol-yellow)] text-[11px] font-bold tracking-wide font-[family-name:var(--font-outfit)] uppercase mb-2">
+                  ⚡ {missingSongs.length} {missingSongs.length === 1 ? 'song needs' : 'songs need'} credits loaded
+                </p>
+                <p className="text-[var(--sol-base01)] text-[10px] font-[family-name:var(--font-montserrat)] mb-2 leading-relaxed">
+                  Open each song below and tap <span className="text-[var(--sol-cyan)] font-bold">CREDITS</span> to index their producers &amp; mixers:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {missingSongs.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => onSelectSong(s, 2)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--sol-base02)] border border-[var(--sol-yellow)]/20 hover:border-[var(--sol-yellow)]/50 hover:bg-[var(--sol-yellow)]/10 transition-all cursor-pointer"
+                    >
+                      {s.albumArt && <img src={s.albumArt} alt="" className="w-4 h-4 rounded object-cover" />}
+                      <span className="text-[var(--sol-base3)] text-[11px] font-bold font-[family-name:var(--font-outfit)] truncate max-w-[120px]">{s.title}</span>
+                      <ChevronRight size={10} className="text-[var(--sol-yellow)] flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
       {/* ── Sub-tab Filter Strip (desktop only) ──────────────────── */}
       <div className="hidden md:flex items-center gap-2 px-6 pb-4 flex-shrink-0">
         {collectionSubTabs.map((tab) => {
@@ -250,7 +424,7 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
       ) : (
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-6 px-6 pb-6">
 
-          {/* Song List */}
+          {/* Main List Area */}
           <div 
             className="flex-1 overflow-y-auto pr-2 max-md:no-scrollbar"
             onScroll={(e) => {
@@ -263,7 +437,8 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
               lastScrollY.current = currentY;
             }}
           >
-            <AnimatePresence mode="popLayout">
+            {activeSubTab === 'songs' && (
+              <AnimatePresence mode="popLayout">
               {filteredSongs.map((song, index) => (
                 <motion.div
                   key={song.id}
@@ -335,6 +510,17 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setAddingSongToSetlist(song);
+                                setMenuOpenId(null);
+                              }}
+                              className="flex items-center gap-3 w-full px-5 py-4 text-[var(--sol-cyan)] hover:bg-[var(--sol-cyan)]/10 transition-colors text-xs font-bold font-[family-name:var(--font-montserrat)] cursor-pointer border-b border-white/5"
+                            >
+                              <ListMusic size={16} />
+                              ADD TO SETLIST
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleDelete(song.id);
                               }}
                               disabled={deletingSongId === song.id}
@@ -357,7 +543,92 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
                   </div>
                 </motion.div>
               ))}
-            </AnimatePresence>
+              </AnimatePresence>
+            )}
+
+            {activeSubTab === 'setlists' && (
+              <SetlistsTab userId={userId} />
+            )}
+
+            {activeSubTab === 'artists' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {artistsList.length === 0 ? (
+                  <p className="text-center col-span-full mt-10 text-[var(--sol-base01)] text-sm">No artists found.</p>
+                ) : (
+                  artistsList.map((artist, idx) => (
+                    <motion.div key={artist.artist} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: idx * 0.05}} className="flex flex-col items-center p-4 bg-[var(--sol-base02)]/30 rounded-2xl border border-white/5 hover:bg-white/5 cursor-pointer">
+                      <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg mb-3">
+                        <PersonAvatar name={artist.artist} fallbackImage={artist.albumArt} type="artist" />
+                      </div>
+                      <p className="text-sm font-bold text-[var(--sol-base3)] text-center w-full truncate font-[family-name:var(--font-outfit)]">{artist.artist}</p>
+                      <p className="text-xs text-[var(--sol-base01)] mt-1 font-[family-name:var(--font-montserrat)]">{artist.songCount} {artist.songCount === 1 ? 'Song' : 'Songs'}</p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeSubTab === 'albums' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {albumsList.length === 0 ? (
+                  <p className="text-center col-span-full mt-10 text-[var(--sol-base01)] text-sm">No albums found.</p>
+                ) : (
+                  albumsList.map((album, idx) => (
+                    <motion.div key={`${album.album}-${album.artist}`} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: idx * 0.05}} className="flex flex-col p-4 bg-[var(--sol-base02)]/30 rounded-2xl border border-white/5 hover:bg-white/5 cursor-pointer">
+                      <div className="w-full aspect-square rounded-xl overflow-hidden shadow-lg mb-3">
+                        {album.albumArt ? <img src={album.albumArt} alt={album.album} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-white/5 flex items-center justify-center"><Disc3 size={32} className="opacity-50" /></div>}
+                      </div>
+                      <p className="text-sm font-bold text-[var(--sol-base3)] w-full truncate font-[family-name:var(--font-outfit)]">{album.album}</p>
+                      <p className="text-xs text-[var(--sol-cyan)] w-full truncate mt-0.5 font-[family-name:var(--font-montserrat)]">{album.artist}</p>
+                      <p className="text-xs text-[var(--sol-base01)] mt-1 font-[family-name:var(--font-montserrat)] opacity-60">{album.songCount} {album.songCount === 1 ? 'Song' : 'Songs'}</p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeSubTab === 'producers' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {producersList.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center pt-10">
+                    <p className="text-center text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)]">No producers indexed yet.</p>
+                    <p className="text-center text-[var(--sol-cyan)]/70 text-xs mt-2 font-[family-name:var(--font-montserrat)]">Fetching will happen automatically when adding songs or viewing credits.</p>
+                  </div>
+                ) : (
+                  producersList.map((producer, idx) => (
+                    <motion.div key={producer.name} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: idx * 0.05}} className="flex flex-col items-center p-4 bg-[var(--sol-base02)]/30 rounded-2xl border border-white/5 hover:bg-white/5 cursor-pointer">
+                      <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg mb-3">
+                        <PersonAvatar name={producer.name} fallbackImage={producer.albumArt} type="producer" />
+                      </div>
+                      <p className="text-sm font-bold text-[var(--sol-base3)] text-center w-full truncate font-[family-name:var(--font-outfit)]">{producer.name}</p>
+                      <p className="text-xs text-[var(--sol-base01)] mt-1 font-[family-name:var(--font-montserrat)]">{producer.songCount} {producer.songCount === 1 ? 'Track' : 'Tracks'}</p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeSubTab === 'mixers' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {mixersList.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center pt-10">
+                    <p className="text-center text-[var(--sol-base01)] text-sm font-[family-name:var(--font-montserrat)]">No mixers indexed yet.</p>
+                    <p className="text-center text-[var(--sol-cyan)]/70 text-xs mt-2 font-[family-name:var(--font-montserrat)]">Fetching will happen automatically when adding songs or viewing credits.</p>
+                  </div>
+                ) : (
+                  mixersList.map((mixer, idx) => (
+                    <motion.div key={mixer.name} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: idx * 0.05}} className="flex flex-col items-center p-4 bg-[var(--sol-base02)]/30 rounded-2xl border border-white/5 hover:bg-white/5 cursor-pointer">
+                      <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg mb-3">
+                        <PersonAvatar name={mixer.name} fallbackImage={mixer.albumArt} type="mixer" />
+                      </div>
+                      <p className="text-sm font-bold text-[var(--sol-base3)] text-center w-full truncate font-[family-name:var(--font-outfit)]">{mixer.name}</p>
+                      <p className="text-xs text-[var(--sol-base01)] mt-1 font-[family-name:var(--font-montserrat)]">{mixer.songCount} {mixer.songCount === 1 ? 'Track' : 'Tracks'}</p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            )}
+
           </div>
 
           {/* ── Right Sidebar (desktop only) ─────────────────────── */}
@@ -419,6 +690,30 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
           </aside>
         </div>
       )}
+
+      <AnimatePresence>
+        {addingSongToSetlist && (
+          <AddToSetlistModal 
+            song={addingSongToSetlist}
+            onClose={() => setAddingSongToSetlist(null)}
+            onSuccess={showToast}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-5 py-3 rounded-full shadow-2xl font-bold text-sm font-[family-name:var(--font-montserrat)] flex items-center gap-2 whitespace-nowrap"
+          >
+            <Check size={16} />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

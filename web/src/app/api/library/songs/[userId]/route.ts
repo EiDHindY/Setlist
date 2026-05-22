@@ -42,6 +42,14 @@ export async function GET(
 
     if (vError) throw vError;
 
+    // Step 2.5: Get credits for all user's songs
+    const { data: creditsData, error: cError } = await admin
+      .from('SongCredits')
+      .select('SongId, CreditsData')
+      .in('SongId', songIds);
+
+    if (cError) throw cError;
+
     // Step 3: Merge — attach versions to their songs
     const versionsBySongId: Record<string, any[]> = {};
     for (const v of (versions ?? [])) {
@@ -54,6 +62,11 @@ export async function GET(
         thumbnailUrl: v.ThumbnailUrl ?? null,
         duration: v.Duration ?? 0,
       });
+    }
+
+    const creditsBySongId: Record<string, any> = {};
+    for (const c of (creditsData ?? [])) {
+      creditsBySongId[c.SongId] = c.CreditsData;
     }
 
     const result = userSongs.map((us: any) => {
@@ -69,6 +82,7 @@ export async function GET(
         totalPlaySeconds: us.TotalPlaySeconds || 0,
         lastPlayedAt: us.LastPlayedAt ?? null,
         addedAt: us.AddedAt,
+        credits: creditsBySongId[s.Id] ?? undefined,
         versions: versionsBySongId[s.Id] ?? [],
       };
     });

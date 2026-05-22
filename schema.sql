@@ -82,6 +82,7 @@ CREATE TABLE "Folders" (
     "Id" uuid PRIMARY KEY,
     "Name" text NOT NULL,
     "OwnerId" text NOT NULL REFERENCES "Users"("Id"),
+    "ParentFolderId" uuid NULL REFERENCES "Folders"("Id"),
     "CreatedAt" timestamp with time zone NOT NULL
 );
 

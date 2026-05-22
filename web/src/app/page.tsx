@@ -50,6 +50,12 @@ export default function HomePage() {
   const [showSearch, setShowSearch] = useState(false);
   const [sharedQuery, setSharedQuery] = useState<string | undefined>(undefined);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  const [selectedSongInitialTab, setSelectedSongInitialTab] = useState(0);
+
+  const openSong = (song: Song, initialTab = 0) => {
+    setSelectedSong(song);
+    setSelectedSongInitialTab(initialTab);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -189,7 +195,7 @@ export default function HomePage() {
             <Library
               userId={(session as Record<string, Record<string, string>>)?.user?.id}
               onOpenSearch={() => setShowSearch(true)}
-              onSelectSong={setSelectedSong}
+              onSelectSong={(song, initialTab) => openSong(song, initialTab)}
               activeSubTab={activeSubTab}
               onSubTabChange={setActiveSubTab}
             />
@@ -205,8 +211,10 @@ export default function HomePage() {
                 >
                   <SongDetail
                     song={selectedSong}
+                    initialTab={selectedSongInitialTab}
                     onBack={() => {
                       setSelectedSong(null);
+                      setSelectedSongInitialTab(0);
                       setActiveTab(1); // Force tab back to Collection
                     }}
                     onSongUpdated={handleSongUpdated}

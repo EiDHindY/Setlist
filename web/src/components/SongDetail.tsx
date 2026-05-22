@@ -4,7 +4,7 @@
 // Port of mobile/lib/screens/song_detail_screen.dart
 // Shows song header + versions list + inline player controls
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import PlusCircle from 'lucide-react/dist/esm/icons/plus-circle';
@@ -34,11 +34,17 @@ import { formatDuration } from '@/types/song';
 import { usePlayback } from '@/contexts/PlaybackContext';
 import VersionSearch from './VersionSearch';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useLibraryStore } from '@/store/libraryStore';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import Check from 'lucide-react/dist/esm/icons/check';
+import { useSetlistStore } from '@/store/setlistStore';
+import AddToSetlistModal from './AddToSetlistModal';
 
 interface SongDetailProps {
   song: Song;
   onBack: () => void;
   onSongUpdated: () => void;
+  initialTab?: number;
 }
 
 const TABS = [
@@ -56,8 +62,8 @@ const LYRICS_SUB_TABS = [
   { id: 'edit', label: 'Edit', icon: FilePenLine },
 ];
 
-export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailProps) {
-  const [currentTab, setCurrentTab] = useState(0);
+export default function SongDetail({ song, onBack, onSongUpdated, initialTab = 0 }: SongDetailProps) {
+  const [currentTab, setCurrentTab] = useState(initialTab);
   const [showVersionSearch, setShowVersionSearch] = useState(false);
   const [artworkExpanded, setArtworkExpanded] = useState(false);
   const [lyricsData, setLyricsData] = useState<{ plain: string | null; source: string } | null>(null);
@@ -73,6 +79,42 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
   const [translating, setTranslating] = useState(false);
   const lastScrollY = useRef(0);
   const { play, state } = usePlayback();
+
+  const { setlists, folders, setlistSongs, removeSongFromSetlist, fetchSetlistSongs } = useSetlistStore();
+  const [addingToSetlist, setAddingToSetlist] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const getFolderPath = useCallback((folderId: string | null): string => {
+    if (!folderId) return 'Root';
+    const crumbs: string[] = [];
+    let curr = folderId;
+    while (curr) {
+      const f = folders.find(f => f.id === curr);
+      if (f) {
+        crumbs.unshift(f.name);
+        curr = f.parentFolderId;
+      } else {
+        break;
+      }
+    }
+    return crumbs.length > 0 ? crumbs.join(' > ') : 'Root';
+  }, [folders]);
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
+  const songSetlists = useMemo(() => {
+    return setlists.filter(setlist => 
+      (setlistSongs[setlist.id] || []).some(s => s.id === song.id)
+    );
+  }, [setlists, setlistSongs, song.id]);
+
+  useEffect(() => {
+    if (currentTab !== 3) return;
+    setlists.forEach(s => fetchSetlistSongs(s.id));
+  }, [currentTab, setlists, fetchSetlistSongs]);
 
   // Fetch lyrics when the Lyrics tab is opened
   useEffect(() => {
@@ -96,7 +138,12 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
     fetch(`/api/credits?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
-        setCreditsData({ ...data.credits, source: data.source });
+        const newCredits = { ...data.credits, source: data.source };
+        setCreditsData(newCredits);
+        useLibraryStore.getState().updateSongOptimistic({
+          ...song,
+          credits: newCredits
+        });
       })
       .catch(() => setCreditsData(null))
       .finally(() => setCreditsLoading(false));
@@ -116,7 +163,12 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
       });
       const response = await fetch(`/api/credits?${params.toString()}`);
       const data = await response.json();
-      setCreditsData({ ...data.credits, source: data.source });
+      const newCredits = { ...data.credits, source: data.source };
+      setCreditsData(newCredits);
+      useLibraryStore.getState().updateSongOptimistic({
+        ...song,
+        credits: newCredits
+      });
     } catch (error) {
       console.error('🛑 Failed to refresh credits:', error);
     } finally {
@@ -756,6 +808,52 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
                   </div>
                 </div>
               </div>
+            ) : currentTab === 3 ? (
+              // ── Setlists Tab ──
+              <div className="h-full overflow-y-auto px-5 pb-28 md:pb-6 pt-4">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-[var(--sol-base3)] font-bold font-[family-name:var(--font-outfit)] uppercase">In Setlists</h3>
+                  <button
+                    onClick={() => setAddingToSetlist(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--sol-cyan)]/30 bg-[var(--sol-cyan)]/10 text-[var(--sol-cyan)] font-bold tracking-wider text-[10px] transition-bounce hover:scale-105 hover:bg-[var(--sol-cyan)]/20 active:scale-95 cursor-pointer font-[family-name:var(--font-outfit)]"
+                  >
+                    <PlusCircle size={14} />
+                    ADD TO SETLIST
+                  </button>
+                </div>
+                
+                {songSetlists.length > 0 ? (
+                  <div className="space-y-2">
+                    {songSetlists.map(setlist => (
+                      <div key={setlist.id} className="flex items-center justify-between p-4 rounded-xl bg-[var(--sol-base02)]/40 border border-[var(--sol-base01)]/10">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-[var(--sol-cyan)]/10 flex items-center justify-center flex-shrink-0">
+                            <ListMusic size={16} className="text-[var(--sol-cyan)]" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[var(--sol-base2)] text-sm font-bold font-[family-name:var(--font-outfit)] truncate">{setlist.name}</p>
+                            <p className="text-[var(--sol-base01)] text-[10px] truncate opacity-60 font-medium font-[family-name:var(--font-montserrat)] tracking-wide">{getFolderPath(setlist.folderId)}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const success = await removeSongFromSetlist(setlist.id, song.id);
+                            if (success) showToast(`Removed from ${setlist.name}`);
+                          }}
+                          className="p-2 rounded-full hover:bg-[var(--sol-red)]/10 group transition-colors flex-shrink-0 ml-4"
+                        >
+                          <Trash2 size={16} className="text-[var(--sol-base01)] group-hover:text-[var(--sol-red)] transition-colors" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                    <ListMusic size={48} className="text-[var(--sol-base01)] mb-4" strokeWidth={1.5} />
+                    <p className="text-[var(--sol-base01)] text-xs font-bold tracking-[2px] font-[family-name:var(--font-outfit)] uppercase text-center">Not in any setlists</p>
+                  </div>
+                )}
+              </div>
             ) : (
               // ── Other Placeholder Tabs ──
               <div className="flex flex-col items-center justify-center h-full pb-20 md:pb-0">
@@ -928,6 +1026,30 @@ export default function SongDetail({ song, onBack, onSongUpdated }: SongDetailPr
           if (didAdd) onSongUpdated();
         }}
       />
+
+      <AnimatePresence>
+        {addingToSetlist && (
+          <AddToSetlistModal 
+            song={song}
+            onClose={() => setAddingToSetlist(false)}
+            onSuccess={showToast}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] bg-[var(--sol-cyan)] text-[var(--sol-base03)] px-5 py-3 rounded-full shadow-2xl font-bold text-sm font-[family-name:var(--font-montserrat)] flex items-center gap-2 whitespace-nowrap"
+          >
+            <Check size={16} />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
