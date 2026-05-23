@@ -116,3 +116,34 @@ CREATE TABLE "__EFMigrationsHistory" (
     "MigrationId" character varying PRIMARY KEY,
     "ProductVersion" character varying NOT NULL
 );
+
+CREATE TABLE "Friendships" (
+    "UserId1" text NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "UserId2" text NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "Status" text NOT NULL CHECK ("Status" IN ('pending', 'accepted', 'blocked')),
+    "ActionUserId" text NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+    "UpdatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT pk_friendships PRIMARY KEY ("UserId1", "UserId2"),
+    CONSTRAINT chk_friendships_order CHECK ("UserId1" < "UserId2")
+);
+
+CREATE INDEX idx_friendships_users ON "Friendships" ("UserId1", "UserId2", "Status");
+
+ALTER TABLE "Friendships" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own friendships"
+    ON "Friendships" FOR SELECT
+    USING (auth.uid()::text = "UserId1" OR auth.uid()::text = "UserId2");
+
+CREATE POLICY "Users can insert friendships they are part of"
+    ON "Friendships" FOR INSERT
+    WITH CHECK (auth.uid()::text = "UserId1" OR auth.uid()::text = "UserId2");
+
+CREATE POLICY "Users can update their own friendships"
+    ON "Friendships" FOR UPDATE
+    USING (auth.uid()::text = "UserId1" OR auth.uid()::text = "UserId2");
+
+CREATE POLICY "Users can delete their own friendships"
+    ON "Friendships" FOR DELETE
+    USING (auth.uid()::text = "UserId1" OR auth.uid()::text = "UserId2");

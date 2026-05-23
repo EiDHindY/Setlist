@@ -32,6 +32,8 @@ export const tabs: TabConfig[] = [
   { id: 4, label: 'PROFILE', icon: User },
 ];
 
+import Users from 'lucide-react/dist/esm/icons/users';
+
 export const collectionSubTabs: SubTabConfig[] = [
   { id: 'songs',     label: 'Songs',     icon: Music2    },
   { id: 'setlists',  label: 'Setlists',  icon: ListMusic },
@@ -39,6 +41,10 @@ export const collectionSubTabs: SubTabConfig[] = [
   { id: 'albums',    label: 'Albums',    icon: Disc3     },
   { id: 'producers', label: 'Producers', icon: Sliders   },
   { id: 'mixers',    label: 'Mixers',    icon: Headphones},
+];
+
+export const partySubTabs: SubTabConfig[] = [
+  { id: 'friends',   label: 'Friends',   icon: Users     },
 ];
 
 export interface SideNavProps {

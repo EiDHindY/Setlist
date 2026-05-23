@@ -270,159 +270,163 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-4 md:pt-10 flex-shrink-0 h-16 md:h-22">
-        <div className="flex-1 mr-4 flex items-center h-full gap-2">
-          <AnimatePresence>
-            {showLocalSearch && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "100%", opacity: 1, maxWidth: "300px" }}
-                exit={{ width: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <input
-                  type="text"
-                  placeholder="Filter collection..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/20 rounded-full px-4 py-1.5 text-sm text-[var(--sol-base3)] placeholder-[var(--sol-base01)] focus:outline-none focus:border-[var(--sol-cyan)]/50 transition-colors font-[family-name:var(--font-montserrat)] outline-none"
-                  autoFocus
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {!showLocalSearch && (
-            <button
-              onClick={() => {
-                const options: ('added' | 'plays' | 'recent')[] = ['added', 'plays', 'recent'];
-                const next = options[(options.indexOf(sortBy) + 1) % options.length];
-                setSortBy(next);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/20 text-[10px] font-bold text-[var(--sol-base1)] hover:bg-[var(--sol-base02)] transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <ArrowUpDown size={12} className="text-[var(--sol-cyan)]" />
-              {sortBy === 'added' ? 'NEWEST' : sortBy === 'plays' ? 'MOST PLAYS' : 'RECENT PLAYS'}
-            </button>
-          )}
-        </div>
+    <div className="flex flex-col lg:flex-row h-full lg:px-6 lg:pb-6 lg:gap-6">
+      <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+        {/* ── Header & Tabs Row ──────────────────────────────────────────────── */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-6 lg:px-0 py-4 md:pt-10 md:pb-6 flex-shrink-0 gap-4">
+          
+          {/* Sub-tab Filter Strip (desktop only) */}
+          <div className="hidden md:flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {collectionSubTabs.map((tab) => {
+              const isActive = activeSubTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <motion.button
+                  key={tab.id}
+                  onClick={() => onSubTabChange(tab.id)}
+                  layout
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className={`relative flex items-center gap-2 rounded-full text-xs font-bold tracking-wide cursor-pointer transition-colors font-[family-name:var(--font-montserrat)] whitespace-nowrap flex-shrink-0 ${
+                    isActive
+                      ? 'bg-[var(--sol-cyan)]/15 text-[var(--sol-cyan)] border border-[var(--sol-cyan)]/30 shadow-[0_0_12px_rgba(42,161,152,0.2)] px-4 py-2'
+                      : 'text-[var(--sol-base01)] hover:text-[var(--sol-base1)] hover:bg-white/5 border border-transparent px-3 py-2'
+                  }`}
+                >
+                  <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                  <AnimatePresence mode="wait">
+                    {isActive && (
+                      <motion.span
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: 'auto', opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="overflow-hidden"
+                      >
+                        {tab.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  {!isActive && (
+                    <span>{tab.label}</span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => loadSongs(true)}
-            className={`p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer ${refreshing ? 'animate-spin' : ''}`}
-            disabled={refreshing}
-          >
-            <RefreshCw size={18} className="text-[var(--sol-base01)]" />
-          </button>
-          <button
-            onClick={() => {
-              setShowLocalSearch(!showLocalSearch);
-              if (showLocalSearch) setSearchQuery('');
-            }}
-            className={`p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer ${showLocalSearch ? 'bg-[var(--sol-cyan)]/20 text-[var(--sol-cyan)]' : 'text-[var(--sol-base01)]'}`}
-          >
-            <Search size={18} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenSearch();
-            }}
-            className="p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer"
-          >
-            <Plus size={18} className="text-[var(--sol-cyan)]" />
-          </button>
-        </div>
-      </div>
-
-
-      {/* ── Missing Credits Banner (Producers / Mixers tabs) ────── */}
-      <AnimatePresence>
-        {(activeSubTab === 'producers' || activeSubTab === 'mixers') && (() => {
-          const missingSongs = filteredSongs.filter(s => !s.credits);
-          if (missingSongs.length === 0) return null;
-          return (
-            <motion.div
-              key="missing-credits-banner"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="px-6 pb-2"
-            >
-              <div className="bg-[var(--sol-yellow)]/8 border border-[var(--sol-yellow)]/20 rounded-xl px-4 py-3">
-                <p className="text-[var(--sol-yellow)] text-[11px] font-bold tracking-wide font-[family-name:var(--font-outfit)] uppercase mb-2">
-                  ⚡ {missingSongs.length} {missingSongs.length === 1 ? 'song needs' : 'songs need'} credits loaded
-                </p>
-                <p className="text-[var(--sol-base01)] text-[10px] font-[family-name:var(--font-montserrat)] mb-2 leading-relaxed">
-                  Open each song below and tap <span className="text-[var(--sol-cyan)] font-bold">CREDITS</span> to index their producers &amp; mixers:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {missingSongs.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => onSelectSong(s, 2)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--sol-base02)] border border-[var(--sol-yellow)]/20 hover:border-[var(--sol-yellow)]/50 hover:bg-[var(--sol-yellow)]/10 transition-all cursor-pointer"
-                    >
-                      {s.albumArt && <img src={s.albumArt} alt="" className="w-4 h-4 rounded object-cover" />}
-                      <span className="text-[var(--sol-base3)] text-[11px] font-bold font-[family-name:var(--font-outfit)] truncate max-w-[120px]">{s.title}</span>
-                      <ChevronRight size={10} className="text-[var(--sol-yellow)] flex-shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })()}
-      </AnimatePresence>
-
-      {/* ── Sub-tab Filter Strip (desktop only) ──────────────────── */}
-      <div className="hidden md:flex items-center gap-2 px-6 pb-4 flex-shrink-0">
-        {collectionSubTabs.map((tab) => {
-          const isActive = activeSubTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <motion.button
-              key={tab.id}
-              onClick={() => onSubTabChange(tab.id)}
-              layout
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className={`relative flex items-center gap-2 rounded-full text-xs font-bold tracking-wide cursor-pointer transition-colors font-[family-name:var(--font-montserrat)] ${
-                isActive
-                  ? 'bg-[var(--sol-cyan)]/15 text-[var(--sol-cyan)] border border-[var(--sol-cyan)]/30 shadow-[0_0_12px_rgba(42,161,152,0.2)] px-4 py-2'
-                  : 'text-[var(--sol-base01)] hover:text-[var(--sol-base1)] hover:bg-white/5 border border-transparent px-3 py-2'
-              }`}
-            >
-              <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-              <AnimatePresence mode="wait">
-                {isActive && (
-                  <motion.span
+          {/* Right side: Search/Sort and Actions */}
+          <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-4">
+            <div className="flex-1 md:flex-none flex items-center justify-start md:justify-end gap-2">
+              <AnimatePresence>
+                {showLocalSearch && (
+                  <motion.div
                     initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 'auto', opacity: 1 }}
+                    animate={{ width: "100%", opacity: 1, maxWidth: "300px" }}
                     exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="whitespace-nowrap overflow-hidden"
+                    className="overflow-hidden"
                   >
-                    {tab.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              {!isActive && (
-                <span className="whitespace-nowrap">{tab.label}</span>
+                  <input
+                    type="text"
+                    placeholder="Filter collection..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/20 rounded-full px-4 py-1.5 text-sm text-[var(--sol-base3)] placeholder-[var(--sol-base01)] focus:outline-none focus:border-[var(--sol-cyan)]/50 transition-colors font-[family-name:var(--font-montserrat)] outline-none"
+                    autoFocus
+                  />
+                </motion.div>
               )}
-            </motion.button>
-          );
-        })}
-      </div>
+            </AnimatePresence>
+            {!showLocalSearch && (
+              <button
+                onClick={() => {
+                  const options: ('added' | 'plays' | 'recent')[] = ['added', 'plays', 'recent'];
+                  const next = options[(options.indexOf(sortBy) + 1) % options.length];
+                  setSortBy(next);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--sol-base02)]/50 border border-[var(--sol-base01)]/20 text-[10px] font-bold text-[var(--sol-base1)] hover:bg-[var(--sol-base02)] transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <ArrowUpDown size={12} className="text-[var(--sol-cyan)]" />
+                {sortBy === 'added' ? 'NEWEST' : sortBy === 'plays' ? 'MOST PLAYS' : 'RECENT PLAYS'}
+              </button>
+            )}
+            </div>
 
-      {/* ── Song List + Sidebar ──────────────────────────────────── */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => loadSongs(true)}
+                className={`p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer ${refreshing ? 'animate-spin' : ''}`}
+                disabled={refreshing}
+              >
+                <RefreshCw size={18} className="text-[var(--sol-base01)]" />
+              </button>
+              <button
+                onClick={() => {
+                  setShowLocalSearch(!showLocalSearch);
+                  if (showLocalSearch) setSearchQuery('');
+                }}
+                className={`p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer ${showLocalSearch ? 'bg-[var(--sol-cyan)]/20 text-[var(--sol-cyan)]' : 'text-[var(--sol-base01)]'}`}
+              >
+                <Search size={18} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenSearch();
+                }}
+                className="p-2 rounded-full hover:bg-white/10 transition-smooth cursor-pointer"
+              >
+                <Plus size={18} className="text-[var(--sol-cyan)]" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Missing Credits Banner (Producers / Mixers tabs) ────── */}
+        <AnimatePresence>
+          {(activeSubTab === 'producers' || activeSubTab === 'mixers') && (() => {
+            const missingSongs = filteredSongs.filter(s => !s.credits);
+            if (missingSongs.length === 0) return null;
+            return (
+              <motion.div
+                key="missing-credits-banner"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="px-6 lg:px-0 pb-2"
+              >
+                <div className="bg-[var(--sol-yellow)]/8 border border-[var(--sol-yellow)]/20 rounded-xl px-4 py-3">
+                  <p className="text-[var(--sol-yellow)] text-[11px] font-bold tracking-wide font-[family-name:var(--font-outfit)] uppercase mb-2">
+                    ⚡ {missingSongs.length} {missingSongs.length === 1 ? 'song needs' : 'songs need'} credits loaded
+                  </p>
+                  <p className="text-[var(--sol-base01)] text-[10px] font-[family-name:var(--font-montserrat)] mb-2 leading-relaxed">
+                    Open each song below and tap <span className="text-[var(--sol-cyan)] font-bold">CREDITS</span> to index their producers &amp; mixers:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {missingSongs.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => onSelectSong(s, 2)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--sol-base02)] border border-[var(--sol-yellow)]/20 hover:border-[var(--sol-yellow)]/50 hover:bg-[var(--sol-yellow)]/10 transition-all cursor-pointer"
+                      >
+                        {s.albumArt && <img src={s.albumArt} alt="" className="w-4 h-4 rounded object-cover" />}
+                        <span className="text-[var(--sol-base3)] text-[11px] font-bold font-[family-name:var(--font-outfit)] truncate max-w-[120px]">{s.title}</span>
+                        <ChevronRight size={10} className="text-[var(--sol-yellow)] flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>
+
+      {/* ── Song List ──────────────────────────────────── */}
       {!isLoaded && isSyncing ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 size={40} className="text-[var(--sol-cyan)] animate-spin" />
         </div>
       ) : (
-        <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-6 px-6 pb-6">
+        <div className="flex-1 overflow-hidden flex flex-col px-6 pb-6 lg:px-0 lg:pb-0">
 
           {/* Main List Area */}
           <div 
@@ -630,13 +634,16 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
             )}
 
           </div>
+        </div>
+      )}
+      </div>
 
-          {/* ── Right Sidebar (desktop only) ─────────────────────── */}
-          <aside className="hidden lg:flex flex-col gap-6 w-72 flex-shrink-0 overflow-y-auto pr-2 no-scrollbar">
+      {/* ── Right Sidebar (desktop only) ─────────────────────── */}
+      <aside className="hidden lg:flex flex-col gap-6 w-72 flex-shrink-0 overflow-y-auto pr-2 no-scrollbar md:pt-10">
 
-            {/* Stats card */}
-            <div className="glass rounded-[32px] p-6 border border-white/5 shadow-xl">
-              <div className="flex items-center gap-2 mb-6 opacity-60">
+        {/* Stats card */}
+        <div className="glass rounded-[32px] p-6 border border-white/5 shadow-xl">
+          <div className="flex items-center gap-2 mb-6 opacity-60">
                 <BarChart3 size={14} className="text-[var(--sol-cyan)]" />
                 <p className="text-[var(--sol-base01)] text-[10px] font-bold tracking-[0.3em] uppercase font-[family-name:var(--font-montserrat)]">Collection Stats</p>
               </div>
@@ -685,11 +692,9 @@ export default function Library({ onOpenSearch, onSelectSong, activeSubTab, onSu
               <p className="text-[var(--sol-base01)] text-[11px] leading-relaxed font-[family-name:var(--font-montserrat)]">
                 Try swiping right on the mobile bar to quickly switch between your collection tabs.
               </p>
-            </div>
-
-          </aside>
         </div>
-      )}
+
+      </aside>
 
       <AnimatePresence>
         {addingSongToSetlist && (

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { tabs, collectionSubTabs, SideNavProps } from './nav-config';
+import { tabs, collectionSubTabs, partySubTabs, SideNavProps } from './nav-config';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 export const MobileBottomNav = ({ avatarUrl, activeTab, onTabChange, activeSubTab, onSubTabChange, isHidden }: SideNavProps) => {
@@ -54,9 +54,9 @@ export const MobileBottomNav = ({ avatarUrl, activeTab, onTabChange, activeSubTa
             className="flex items-center w-full h-full px-4 gap-2"
           >
             {/* Sub-tabs: active expands to icon+label, inactive = icon only. Swipe right to go back. */}
-            {activeTab === 1 ? (
+            {activeTab === 1 || activeTab === 3 ? (
               <div className="flex-1 flex items-center justify-between gap-1">
-                {collectionSubTabs.map((sub) => {
+                {(activeTab === 1 ? collectionSubTabs : partySubTabs).map((sub) => {
                   const isActive = activeSubTab === sub.id;
                   const Icon = sub.icon;
                   return (

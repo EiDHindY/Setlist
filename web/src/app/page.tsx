@@ -30,6 +30,7 @@ const Library = dynamic(() => import("@/components/Library"), { ssr: false });
 const SearchModal = dynamic(() => import("@/components/SearchModal"), { ssr: false });
 const SongDetail = dynamic(() => import("@/components/SongDetail"), { ssr: false });
 const ProfilePanel = dynamic(() => import("@/components/ProfilePanel"), { ssr: false });
+const Party = dynamic(() => import("@/components/Party"), { ssr: false });
 
 export default function HomePage() {
   // ── Auth State ────────────────────────────────────────────────────
@@ -246,15 +247,16 @@ export default function HomePage() {
         return (
           <motion.div
             key="party"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.25 }}
             className="h-full"
           >
-            <UnderDevelopment
-              title="Party Mode"
-              icon={PartyPopper}
-              description="Create a shared session and listen to music together in real-time via SignalR."
+            <Party 
+              userId={(session as Record<string, Record<string, string>>)?.user?.id}
+              activeSubTab={activeSubTab}
+              onSubTabChange={setActiveSubTab}
             />
           </motion.div>
         );
