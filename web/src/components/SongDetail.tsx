@@ -87,7 +87,7 @@ export default function SongDetail({ song, onBack, onSongUpdated, initialTab = 0
   const getFolderPath = useCallback((folderId: string | null): string => {
     if (!folderId) return 'Root';
     const crumbs: string[] = [];
-    let curr = folderId;
+    let curr: string | null = folderId;
     while (curr) {
       const f = folders.find(f => f.id === curr);
       if (f) {
