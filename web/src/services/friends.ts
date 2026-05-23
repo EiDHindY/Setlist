@@ -21,10 +21,7 @@ export const searchUsers = async (query: string): Promise<UserProfile[]> => {
   if (!query || query.length < 2) return [];
 
   const { data, error } = await supabase
-    .from('Users')
-    .select('Id, DisplayName, AvatarUrl')
-    .or(`DisplayName.ilike.%${query}%,Email.ilike.%${query}%`)
-    .limit(20);
+    .rpc('search_users', { search_query: query });
 
   if (error) {
     console.error('Error searching users:', error);
@@ -35,13 +32,7 @@ export const searchUsers = async (query: string): Promise<UserProfile[]> => {
 
 export const getFriendships = async (userId: string): Promise<Friendship[]> => {
   const { data, error } = await supabase
-    .from('Friendships')
-    .select(`
-      UserId1, UserId2, Status, ActionUserId, CreatedAt,
-      User1:Users!UserId1(Id, DisplayName, AvatarUrl),
-      User2:Users!UserId2(Id, DisplayName, AvatarUrl)
-    `)
-    .or(`UserId1.eq.${userId},UserId2.eq.${userId}`);
+    .rpc('get_user_friendships', { p_user_id: userId });
 
   if (error) {
     console.error('Error getting friendships:', JSON.stringify(error, null, 2));
@@ -50,6 +41,7 @@ export const getFriendships = async (userId: string): Promise<Friendship[]> => {
   
   return data as unknown as Friendship[];
 };
+
 
 export const sendFriendRequest = async (userId: string, targetUserId: string): Promise<boolean> => {
   const uid1 = userId < targetUserId ? userId : targetUserId;
@@ -95,4 +87,28 @@ export const removeFriendship = async (userId1: string, userId2: string): Promis
     return false;
   }
   return true;
+};
+
+export const subscribeToFriendships = (userId: string, onUpdate: () => void) => {
+  const channel = supabase
+    .channel(`friendships-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'Friendships', filter: `UserId1=eq.${userId}` },
+      () => {
+        onUpdate();
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'Friendships', filter: `UserId2=eq.${userId}` },
+      () => {
+        onUpdate();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 };

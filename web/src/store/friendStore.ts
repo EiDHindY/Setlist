@@ -6,7 +6,8 @@ import {
   sendFriendRequest, 
   acceptFriendRequest, 
   removeFriendship,
-  searchUsers as searchUsersApi
+  searchUsers as searchUsersApi,
+  subscribeToFriendships as subscribeToFriendshipsApi
 } from '@/services/friends';
 
 interface FriendState {
@@ -23,6 +24,9 @@ interface FriendState {
   acceptRequest: (userId: string, friendship: Friendship) => Promise<boolean>;
   removeFriend: (userId: string, friendship: Friendship) => Promise<boolean>;
   clearSearchResults: () => void;
+  subscribeToFriendships: (userId: string) => void;
+  unsubscribeFromFriendships: () => void;
+  _unsubscribe: (() => void) | null;
 }
 
 export const useFriendStore = create<FriendState>()((set, get) => ({
@@ -31,6 +35,7 @@ export const useFriendStore = create<FriendState>()((set, get) => ({
   isLoaded: false,
   isSearching: false,
   isActionLoading: false,
+  _unsubscribe: null,
 
   fetchFriendships: async (userId: string) => {
     const data = await getFriendships(userId);
@@ -83,5 +88,25 @@ export const useFriendStore = create<FriendState>()((set, get) => ({
     }
     set({ isActionLoading: false });
     return success;
+  },
+
+  subscribeToFriendships: (userId: string) => {
+    // Prevent multiple subscriptions
+    if (get()._unsubscribe) return;
+
+    const unsubscribe = subscribeToFriendshipsApi(userId, () => {
+      // Whenever there's an update, refetch the friendships
+      get().fetchFriendships(userId);
+    });
+
+    set({ _unsubscribe: unsubscribe });
+  },
+
+  unsubscribeFromFriendships: () => {
+    const unsubscribe = get()._unsubscribe;
+    if (unsubscribe) {
+      unsubscribe();
+      set({ _unsubscribe: null });
+    }
   }
 }));

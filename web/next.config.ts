@@ -35,6 +35,15 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
+  },
+
   env: {
     NEXT_PUBLIC_BUILD_SHA: buildSha,
     NEXT_PUBLIC_BUILD_BRANCH: buildBranch,

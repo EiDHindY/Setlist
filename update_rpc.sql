@@ -19,3 +19,22 @@ BEGIN
   WHERE "SongId" = p_song_id AND "UserId" = p_user_id;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Added 2026-05-22 for User Search
+CREATE OR REPLACE FUNCTION search_users(search_query text)
+RETURNS TABLE (
+  "Id" text,
+  "DisplayName" text,
+  "AvatarUrl" text
+)
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT u."Id", u."DisplayName", u."AvatarUrl"
+  FROM "Users" u
+  WHERE u."DisplayName" ILIKE '%' || search_query || '%'
+     OR u."Email" ILIKE '%' || search_query || '%'
+  LIMIT 20;
+END;
+$$ LANGUAGE plpgsql;
